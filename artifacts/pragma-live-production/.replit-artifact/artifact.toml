@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "PRAGMA Live Production"
+description = "Landing page institucional da PRAGMA Live Production, conectando ideias a experiências por meio de planejamento, pessoas e execução técnica e audiovisual."
+version = "1.0.0"
+id = "artifacts/pragma-live-production"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19727
+
+[services.development]
+run = "pnpm --filter @workspace/pragma-live-production run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pragma-live-production", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/pragma-live-production/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19727"
+BASE_PATH = "/"
