@@ -7,6 +7,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import coverImage from '@assets/pragma-brand-cover.png';
 import facadeImage from '@assets/pragma-facade-vehicle.png';
+import heroVideo from '@assets/1108328_1080p_4k_1280x720_1789673316521.mp4';
 
 const queryClient = new QueryClient();
 
@@ -62,7 +63,17 @@ function Home() {
       <div className="noise" />
       <Header />
       <section className="hero" aria-label="PRAGMA Live Production">
-        <img className="hero-cover" src={coverImage} alt="" aria-hidden="true" />
+        <video
+          className="hero-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          poster={coverImage}
+          aria-hidden="true"
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
         <div className="wrap hero-grid">
           <div>
             <div className="eyebrow mono reveal">Live production / desde 2016</div>
