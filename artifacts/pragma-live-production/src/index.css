@@ -63,9 +63,9 @@ button { cursor: pointer; }
 .topbar { position: absolute; z-index: 5; top: 0; left: 0; width: 100%; padding: 26px 0; }
 .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
 .brand { display: inline-flex; align-items: center; gap: 13px; color: var(--paper); text-decoration: none; }
-.brand-mark { width: 29px; height: 29px; display: block; }
-.brand-word { font-size: 20px; font-weight: 700; letter-spacing: .08em; }
-.brand-word small { display: block; font: 8px var(--font-mono); letter-spacing: .33em; margin-top: 1px; color: var(--paper-dim); }
+/* The official SVG has 25/240 of built-in padding; negative margins cancel it so the artwork aligns with the grid. */
+.brand-logo { --logo-h: 52px; --logo-pad: calc(var(--logo-h) * -25 / 240); display: block; height: var(--logo-h); width: auto; margin: var(--logo-pad) 0 var(--logo-pad) var(--logo-pad); }
+.brand-logo-footer { --logo-h: 40px; }
 .nav { display: flex; gap: 28px; align-items: center; }
 .nav a { color: var(--paper-dim); font: 10px var(--font-mono); letter-spacing: .15em; text-decoration: none; text-transform: uppercase; transition: color .2s; }
 .nav a:hover { color: var(--acid); }
@@ -160,11 +160,11 @@ button { cursor: pointer; }
 .submit:hover { background: var(--paper); transform: translateY(-2px); }.form-message { color: var(--acid); font-size: 13px; }
 
 .footer { border-top: 1px solid var(--line); padding: 23px 0; background: var(--ink); color: var(--paper-dim); }
-.footer-inner { display: flex; justify-content: space-between; gap: 20px; align-items: center; }.footer a { color: var(--paper); text-decoration: none; }.footer a:hover { color: var(--acid); }
+.footer-inner { display: flex; justify-content: space-between; gap: 20px; align-items: center; }.footer-brand { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }.footer a { color: var(--paper); text-decoration: none; }.footer a:hover { color: var(--acid); }
 
 @media (max-width: 800px) {
   .wrap { width: min(100% - 36px, 620px); }.section { padding: 90px 0; }
-  .nav { display: none; position: absolute; top: 70px; left: 18px; right: 18px; padding: 20px; background: var(--surface); border: 1px solid var(--line); flex-direction: column; align-items: flex-start; gap: 20px; }.nav.open { display: flex; }.menu-button { display: block; }
+  .nav { display: none; position: absolute; top: 70px; left: 18px; right: 18px; padding: 20px; background: var(--surface); border: 1px solid var(--line); flex-direction: column; align-items: flex-start; gap: 20px; }.nav.open { display: flex; }.menu-button { display: block; }.brand-logo-header { --logo-h: 42px; }
   .hero { min-height: 760px; padding-bottom: 60px; }.hero-grid, .intro-layout, .process-layout, .contact-layout { grid-template-columns: 1fr; gap: 45px; }.hero h1 { font-size: clamp(62px, 17vw, 106px); }.hero-copy { margin-left: 0; }.hero-meta { padding: 0 18px; }.hero-side-line { display: none; }
   .intro-layout { gap: 36px; }.cap-head { display: block; margin-bottom: 44px; }.cap-head p { margin-top: 25px; }.cap-grid { grid-template-columns: 1fr 1fr; }.cap-card:nth-child(3n) { border-right: 1px solid var(--line); }.cap-card:nth-child(2n) { border-right: 0; }.cap-card { min-height: 235px; padding: 20px 15px; }.cap-card h3 { margin-top: 54px; font-size: 19px; }.cap-card p { font-size: 12px; }
   .work-grid { grid-template-columns: 1fr; margin-top: 45px; }.work-feature { min-height: 430px; }.work-tile { min-height: 220px; }

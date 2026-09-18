@@ -8,15 +8,12 @@ import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import coverImage from '@assets/pragma-brand-cover.png';
 import facadeImage from '@assets/pragma-facade-vehicle.png';
 import heroVideo from '@assets/1108328_1080p_4k_1280x720_1789673316521.mp4';
+import logoHorizontal from '@/assets/brand/PRAGMA_Horizontal_Verde_Branco.svg';
 
 const queryClient = new QueryClient();
 
-function Mark() {
-  return (
-    <svg className="brand-mark" viewBox="0 0 40 40" aria-label="PRAGMA symbol">
-      <path d="M8 5h8v25H8zM16 5h8c6.4 0 10 3.4 10 8.2S30.4 21.5 24 21.5h-5v-7h4.5c2 0 3.1-.5 3.1-1.6s-1.1-1.6-3.1-1.6H16zM19 27h8l7 5H19z" fill="currentColor" />
-    </svg>
-  );
+function Logo({ className }: { className: string }) {
+  return <img className={`brand-logo ${className}`} src={logoHorizontal} alt="PRAGMA Live Production" width={1050} height={240} />;
 }
 
 function Header() {
@@ -26,8 +23,7 @@ function Header() {
     <header className="topbar">
       <div className="wrap topbar-inner">
         <a className="brand" href="#top" onClick={closeMenu} data-testid="link-home">
-          <Mark />
-          <span className="brand-word">PRAGMA<small>LIVE PRODUCTION</small></span>
+          <Logo className="brand-logo-header" />
         </a>
         <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Abrir menu" data-testid="button-menu">
           {menuOpen ? '×' : '≡'}
@@ -185,7 +181,7 @@ function Home() {
         </div>
       </section>
 
-      <footer className="footer"><div className="wrap footer-inner"><span className="mono">PRAGMA LIVE PRODUCTION — fazer acontecer é o nosso método.</span><span className="mono"><a href="mailto:ola@pragma.live" data-testid="link-email">ola@pragma.live</a> &nbsp; / &nbsp; <a href="#top" data-testid="link-back-top">voltar ao topo ↑</a></span></div></footer>
+      <footer className="footer"><div className="wrap footer-inner"><div className="footer-brand"><Logo className="brand-logo-footer" /><span className="mono">Fazer acontecer é o nosso método.</span></div><span className="mono"><a href="mailto:ola@pragma.live" data-testid="link-email">ola@pragma.live</a> &nbsp; / &nbsp; <a href="#top" data-testid="link-back-top">voltar ao topo ↑</a></span></div></footer>
     </main>
   );
 }
