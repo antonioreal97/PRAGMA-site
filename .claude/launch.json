@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pragma-site",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["/private/tmp/claude-501/-Users-antonio-CODE-PRAGMA-PRAGMA-site/f11c2072-51ef-486b-8e79-1c1eabd178e7/scratchpad/dev.sh"],
+      "port": 5173
+    }
+  ]
+}
