@@ -298,7 +298,7 @@ p { text-wrap: pretty; }
   .nav .nav-cta { justify-content: center; margin-top: 8px; padding: 16px; border: 0; background: var(--acid); color: var(--ink); font: 500 11px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
   .nav .nav-cta:active { background: var(--acid); }
 
-  .hero { min-height: max(700px, 100svh); padding-bottom: 108px; }
+  .hero { min-height: max(700px, 100svh); padding-top: 88px; padding-bottom: 108px; }
   .hero-grid, .intro-layout, .process-layout, .contact-layout { grid-template-columns: 1fr; gap: 45px; }
   .hero h1 { font-size: clamp(60px, 17vw, 106px); letter-spacing: -.05em; }
   .hero-copy { margin-left: 0; }
