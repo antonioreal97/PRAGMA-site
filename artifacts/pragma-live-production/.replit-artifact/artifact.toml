@@ -17,7 +17,7 @@ run = "pnpm --filter @workspace/pragma-live-production run dev"
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/pragma-live-production", "run", "build" ]
 serve = "static"
-publicDir = "artifacts/pragma-live-production/dist/public"
+publicDir = "artifacts/pragma-live-production/dist"
 
 [[services.production.rewrites]]
 from = "/*"
