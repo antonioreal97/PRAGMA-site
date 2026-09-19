@@ -626,6 +626,108 @@ main:focus {
 .work-statement span {
   color: var(--acid);
 }
+.work-tile-media {
+  flex-shrink: 0;
+  width: 148px;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* Real team photos. */
+.intro-photo {
+  max-width: 520px;
+  margin: 36px 0 0;
+}
+.intro-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.intro-photo figcaption,
+.gallery-item figcaption {
+  margin-top: 12px;
+  color: var(--paper-dim);
+}
+.gallery-section {
+  border-top: 1px solid var(--line);
+}
+.gallery {
+  margin-top: 32px;
+}
+.gallery-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.gallery-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  transition:
+    background-color var(--duration) var(--ease),
+    opacity var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+.gallery-button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.gallery-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+/* Native scrolling (momentum + snap), with the first photo aligned to the page grid
+   and the rest bleeding off the right edge to show there is more. */
+.gallery-track {
+  --gallery-inset: max(var(--gutter), (100% - var(--container)) / 2);
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0 var(--gallery-inset) 4px;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gallery-inset);
+  scrollbar-width: none;
+}
+.gallery-track::-webkit-scrollbar {
+  display: none;
+}
+.gallery-track:focus-visible {
+  outline-offset: -2px;
+}
+.gallery-item {
+  flex: none;
+  scroll-snap-align: start;
+}
+.gallery-item figure {
+  margin: 0;
+}
+.gallery-item img {
+  display: block;
+  width: auto;
+  max-width: calc(100vw - var(--gutter) * 2);
+  height: clamp(300px, 36vw, 480px);
+  object-fit: cover;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  user-select: none;
+  -webkit-user-drag: none;
+}
 .process {
   background: var(--ink-soft);
   border-block: 1px solid var(--line);
@@ -864,7 +966,8 @@ main:focus {
   .ui-button-secondary:hover,
   .ui-button-ghost:hover,
   .media-control:hover,
-  .menu-button:hover {
+  .menu-button:hover,
+  .gallery-button:hover:not(:disabled) {
     background: var(--surface-2);
   }
   .ui-button-destructive:hover {
@@ -1033,6 +1136,12 @@ main:focus {
   }
   .work-grid {
     gap: 36px;
+  }
+  .work-tile-media {
+    width: 112px;
+  }
+  .gallery-track {
+    gap: 12px;
   }
   .process-layout {
     gap: 40px;

@@ -20,7 +20,11 @@ import { HeroMedia } from "@/components/site/hero-media";
 import { ContactForm } from "@/components/site/contact-form";
 import NotFound from "@/pages/not-found";
 import { Route, Switch, Router as WouterRouter } from "wouter";
+import { PhotoGallery } from "@/components/site/photo-gallery";
 import facadeImage from "@assets/pragma-facade-vehicle.jpg";
+import teamPhoto from "@/assets/photos/equipe.jpg";
+import stagePhoto from "@/assets/photos/palco-tenda.jpg";
+import streamPhoto from "@/assets/photos/streaming-mesa.jpg";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +111,17 @@ function Home() {
               <h2 className="section-title">
                 Produção é parte da <em>ideia.</em>
               </h2>
+              <figure className="intro-photo">
+                <img
+                  src={teamPhoto}
+                  alt="Cinco integrantes da equipe, de casaco preto, lado a lado em um evento noturno."
+                  width={796}
+                  height={528}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption className="mono">A equipe em campo</figcaption>
+              </figure>
             </div>
             <div className="intro-copy">
               <p>
@@ -206,7 +221,15 @@ function Home() {
                   className="work-tile"
                   data-testid="card-project-summit"
                 >
-                  <Users size={24} aria-hidden="true" />
+                  <img
+                    className="work-tile-media"
+                    src={stagePhoto}
+                    alt="Câmera em tripé no canto do palco de um show em tenda, com painel de LED ao fundo."
+                    width={1280}
+                    height={960}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div>
                     <h3>O palco é só uma parte.</h3>
                     <p>
@@ -219,7 +242,15 @@ function Home() {
                   className="work-tile"
                   data-testid="card-project-stream"
                 >
-                  <RadioTower size={24} aria-hidden="true" />
+                  <img
+                    className="work-tile-media"
+                    src={streamPhoto}
+                    alt="Mesa de som, notebook com software de transmissão e switcher durante a gravação de um podcast."
+                    width={1280}
+                    height={960}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div>
                     <h3>Presença não tem distância.</h3>
                     <p>
@@ -236,6 +267,21 @@ function Home() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section
+          className="section gallery-section"
+          id="bastidores"
+          aria-labelledby="gallery-title"
+          tabIndex={-1}
+        >
+          <div className="wrap">
+            <div className="section-label">Bastidores</div>
+            <h2 className="section-title" id="gallery-title">
+              Gente de verdade, <em>fazendo acontecer.</em>
+            </h2>
+          </div>
+          <PhotoGallery />
         </section>
 
         <section className="section process" id="method" tabIndex={-1}>
