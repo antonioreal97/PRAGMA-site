@@ -28,6 +28,7 @@
   --section-space: clamp(4.5rem, 8vw, 7.5rem);
   --container: 1200px;
   --gutter: clamp(1.25rem, 4vw, 4rem);
+  --header-h: 80px;
   --radius: 0.625rem;
   --radius-panel: 1rem;
   --shadow-sm: 0 2px 8px rgb(0 0 0 / 0.1);
@@ -339,7 +340,7 @@ main:focus {
   position: sticky;
   top: 0;
   z-index: 30;
-  height: 80px;
+  height: var(--header-h);
   border-bottom: 1px solid var(--line);
   background: var(--ink);
 }
@@ -400,14 +401,17 @@ main:focus {
   color: var(--paper);
 }
 
-/* Hero: one message and one primary action, supported by the existing event footage. */
+/* Hero: first screen is the full viewport, with the sticky bar sitting on top. */
 .hero {
   position: relative;
   isolation: isolate;
-  min-height: 650px;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  margin-top: calc(var(--header-h) * -1);
   display: grid;
   align-items: center;
-  padding-block: 80px 112px;
+  padding-block: calc(var(--header-h) + 48px) 112px;
   background: var(--ink);
 }
 .hero-media {
@@ -425,10 +429,10 @@ main:focus {
   object-fit: cover;
 }
 .hero-media img {
-  opacity: 0.6;
+  opacity: 0.88;
 }
 .hero-media video {
-  opacity: 0.6;
+  opacity: 0.88;
 }
 .hero::before {
   content: "";
@@ -437,9 +441,9 @@ main:focus {
   z-index: -1;
   background: linear-gradient(
     90deg,
-    rgb(8 11 10 / 0.97),
-    rgb(8 11 10 / 0.82) 45%,
-    rgb(8 11 10 / 0.2)
+    rgb(8 11 10 / 0.62),
+    rgb(8 11 10 / 0.38) 45%,
+    rgb(8 11 10 / 0.08)
   );
 }
 .hero-content {
@@ -467,21 +471,6 @@ main:focus {
   align-items: center;
   gap: 18px 28px;
   margin-top: 32px;
-}
-.media-control {
-  position: absolute;
-  right: var(--gutter);
-  bottom: 24px;
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--line-strong);
-  background: var(--ink);
-  color: var(--paper);
-  border-radius: var(--radius);
-  font-size: 0.75rem;
 }
 
 .intro {
@@ -965,7 +954,6 @@ main:focus {
   }
   .ui-button-secondary:hover,
   .ui-button-ghost:hover,
-  .media-control:hover,
   .menu-button:hover,
   .gallery-button:hover:not(:disabled) {
     background: var(--surface-2);
@@ -1001,8 +989,11 @@ main:focus {
   }
 }
 @media (max-width: 900px) {
+  :root {
+    --header-h: 72px;
+  }
   .topbar {
-    height: 72px;
+    height: var(--header-h);
   }
   .brand-logo {
     width: 165px;
@@ -1046,11 +1037,10 @@ main:focus {
     margin-top: 8px;
   }
   .hero {
-    min-height: 590px;
-    padding-block: 64px 100px;
+    padding-block: calc(var(--header-h) + 40px) 100px;
   }
   .hero::before {
-    background: linear-gradient(90deg, rgb(8 11 10 / 0.96), rgb(8 11 10 / 0.7));
+    background: linear-gradient(90deg, rgb(8 11 10 / 0.58), rgb(8 11 10 / 0.32));
   }
   .hero h1 {
     font-size: clamp(2.75rem, 7.2vw, 4rem);
@@ -1088,8 +1078,7 @@ main:focus {
 }
 @media (max-width: 600px) {
   .hero {
-    min-height: 610px;
-    padding-block: 52px 96px;
+    padding-block: calc(var(--header-h) + 28px) 96px;
   }
   .hero h1 {
     font-size: clamp(2.5rem, 10.4vw, 3.75rem);
@@ -1106,9 +1095,6 @@ main:focus {
   }
   .hero-actions .text-link {
     justify-content: center;
-  }
-  .media-control {
-    bottom: 20px;
   }
   .section-title {
     max-width: 100%;
