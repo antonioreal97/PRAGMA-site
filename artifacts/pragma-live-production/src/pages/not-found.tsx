@@ -1,23 +1,32 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { ArrowLeft, Mail } from "lucide-react";
+import { Link } from "wouter";
+import { Brand } from "@/components/site/brand";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              404 Page Not Found
-            </h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <main className="status-page">
+      <Link href="/" aria-label="PRAGMA: página inicial">
+        <Brand />
+      </Link>
+      <span className="status-code">404</span>
+      <h1>Essa página saiu de cena.</h1>
+      <p>
+        O endereço pode ter mudado ou não existir. Volte ao início para conhecer
+        a PRAGMA ou fale com a nossa equipe.
+      </p>
+      <div className="status-actions">
+        <Button asChild>
+          <Link href="/">
+            <ArrowLeft aria-hidden="true" /> Voltar ao início
+          </Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <a href="mailto:ola@pragma.live">
+            <Mail aria-hidden="true" /> Falar com a PRAGMA
+          </a>
+        </Button>
+      </div>
+    </main>
   );
 }
