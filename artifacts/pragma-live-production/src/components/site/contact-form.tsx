@@ -56,7 +56,7 @@ export function ContactForm() {
   };
   return (
     <form
-      className="contact-form"
+      className="panel contact-form"
       noValidate
       onSubmit={submit}
       onChange={(event) => {

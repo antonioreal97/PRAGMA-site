@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import feiraPalcoLed from "@/assets/photos/feira-palco-led.jpg";
 import corteAoVivo from "@/assets/photos/corte-ao-vivo.jpg";
@@ -90,6 +90,8 @@ export function PhotoGallery() {
   const trackRef = useRef<HTMLUListElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
+  // Fração visível do trilho, para a barra de progresso da faixa.
+  const [rail, setRail] = useState(0.25);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -98,6 +100,9 @@ export function PhotoGallery() {
       const max = track.scrollWidth - track.clientWidth;
       setCanPrev(track.scrollLeft > 4);
       setCanNext(track.scrollLeft < max - 4);
+      const window_ = track.clientWidth / track.scrollWidth;
+      const travelled = max > 0 ? track.scrollLeft / max : 0;
+      setRail(Math.min(1, window_ + travelled * (1 - window_)));
     };
     update();
     track.addEventListener("scroll", update, { passive: true });
@@ -123,6 +128,13 @@ export function PhotoGallery() {
   return (
     <div className="gallery">
       <div className="wrap gallery-controls">
+        <div
+          className="gallery-rail"
+          style={{ "--rail": rail } as CSSProperties}
+          aria-hidden="true"
+        >
+          <span />
+        </div>
         <button
           type="button"
           className="gallery-button"
@@ -154,15 +166,17 @@ export function PhotoGallery() {
         {photos.map((photo) => (
           <li className="gallery-item" key={photo.src}>
             <figure>
-              <img
-                src={photo.src}
-                alt={photo.alt}
-                width={photo.width}
-                height={photo.height}
-                loading="lazy"
-                decoding="async"
-                draggable={false}
-              />
+              <div className="frame">
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  width={photo.width}
+                  height={photo.height}
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                />
+              </div>
               <figcaption className="mono">{photo.caption}</figcaption>
             </figure>
           </li>

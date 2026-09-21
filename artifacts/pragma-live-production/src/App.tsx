@@ -9,6 +9,7 @@ import {
   RadioTower,
   Users,
 } from "lucide-react";
+import type { CSSProperties } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +19,7 @@ import { Brand } from "@/components/site/brand";
 import { Header } from "@/components/site/header";
 import { HeroMedia } from "@/components/site/hero-media";
 import { ContactForm } from "@/components/site/contact-form";
+import { useSiteMotion, useSpotlight } from "@/components/site/motion";
 import NotFound from "@/pages/not-found";
 import { Route, Switch, Router as WouterRouter } from "wouter";
 import { PhotoGallery } from "@/components/site/photo-gallery";
@@ -27,6 +29,10 @@ import stagePhoto from "@/assets/photos/palco-tenda.jpg";
 import streamPhoto from "@/assets/photos/streaming-mesa.jpg";
 
 const queryClient = new QueryClient();
+
+/** Atraso em cascata para um grupo revelado junto. */
+const stagger = (index: number, step = 70): CSSProperties =>
+  ({ "--reveal-delay": `${index * step}ms` }) as CSSProperties;
 
 const capabilities: [string, string, string, LucideIcon][] = [
   [
@@ -67,7 +73,26 @@ const capabilities: [string, string, string, LucideIcon][] = [
   ],
 ];
 
+const method: [string, string, string][] = [
+  [
+    "01",
+    "Escutar",
+    "Entender o que precisa ser dito, e o que não pode dar errado.",
+  ],
+  ["02", "Desenhar", "Traduzir ideia em planta, timeline, rider e plano B."],
+  [
+    "03",
+    "Preparar",
+    "Alinhar equipe, equipamento e expectativa na mesma frequência.",
+  ],
+  ["04", "Executar", "Estar presente, atento e um passo à frente do momento."],
+  ["05", "Entregar", "Fechar o ciclo com o mesmo cuidado que abriu."],
+];
+
 function Home() {
+  useSiteMotion();
+  const spotlight = useSpotlight();
+
   return (
     <div className="pragma-page">
       <a className="skip-link" href="#top">
@@ -79,11 +104,24 @@ function Home() {
           <HeroMedia />
           <div className="wrap hero-grid">
             <div className="hero-content">
-              <p className="eyebrow mono">Live production / desde 2016</p>
+              <p className="eyebrow mono">
+                <span className="live-dot" aria-hidden="true" />
+                Live production / desde 2016
+              </p>
               <h1 id="hero-title">
-                A ideia entra.
-                <br />
-                <span>A experiência acontece.</span>
+                <span className="hero-line">
+                  <span style={{ "--line-delay": "80ms" } as CSSProperties}>
+                    A ideia entra.
+                  </span>
+                </span>
+                <span className="hero-line">
+                  <span
+                    className="accent-gradient"
+                    style={{ "--line-delay": "220ms" } as CSSProperties}
+                  >
+                    A experiência acontece.
+                  </span>
+                </span>
               </h1>
               <p className="hero-copy">
                 Som, luz, imagem e pessoas. Uma operação integrada para
@@ -102,28 +140,44 @@ function Home() {
               </div>
             </div>
           </div>
+          {/* Faixa de operação: as camadas que a PRAGMA opera, como um
+              painel de canais. Conteúdo real, sem número inventado. */}
+          <div className="hero-console" aria-hidden="true">
+            <div className="wrap">
+              <ul className="mono">
+                {capabilities.map(([index, title], position) => (
+                  <li key={index} className={position > 2 ? "optional" : ""}>
+                    {title}
+                  </li>
+                ))}
+                <li className="hero-console-now">Brasília, DF</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         <section className="section intro" id="about" tabIndex={-1}>
           <div className="wrap intro-layout">
-            <div>
+            <div data-reveal>
               <div className="section-label">O que fazemos</div>
               <h2 className="section-title">
                 Produção é parte da <em>ideia.</em>
               </h2>
               <figure className="intro-photo">
-                <img
-                  src={teamPhoto}
-                  alt="Cinco integrantes da equipe, de casaco preto, lado a lado em um evento noturno."
-                  width={796}
-                  height={528}
-                  loading="lazy"
-                  decoding="async"
-                />
+                <div className="frame frame-corners">
+                  <img
+                    src={teamPhoto}
+                    alt="Cinco integrantes da equipe, de casaco preto, lado a lado em um evento noturno."
+                    width={796}
+                    height={528}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
                 <figcaption className="mono">A equipe em campo</figcaption>
               </figure>
             </div>
-            <div className="intro-copy">
+            <div className="intro-copy" data-reveal style={stagger(1, 120)}>
               <p>
                 A PRAGMA entra cedo. Antes da primeira luz, existe uma conversa,
                 um mapa, uma decisão. Trabalhamos ao lado de marcas, agências e
@@ -135,18 +189,16 @@ function Home() {
                 gente.
               </p>
               <div className="number-list">
-                <div className="number-item">
-                  <span className="num">/ 01</span>
-                  <p>Leitura precisa do que você quer dizer.</p>
-                </div>
-                <div className="number-item">
-                  <span className="num">/ 02</span>
-                  <p>Desenho técnico que não aparece, mas funciona.</p>
-                </div>
-                <div className="number-item">
-                  <span className="num">/ 03</span>
-                  <p>Execução humana, atenta e sem ruído.</p>
-                </div>
+                {[
+                  "Leitura precisa do que você quer dizer.",
+                  "Desenho técnico que não aparece, mas funciona.",
+                  "Execução humana, atenta e sem ruído.",
+                ].map((copy, index) => (
+                  <div className="number-item" key={copy}>
+                    <span className="num">/ 0{index + 1}</span>
+                    <p>{copy}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -157,8 +209,9 @@ function Home() {
           id="capabilities"
           tabIndex={-1}
         >
+          <div className="fx-grid" aria-hidden="true" />
           <div className="wrap">
-            <div className="cap-head">
+            <div className="cap-head" data-reveal>
               <div>
                 <div className="section-label">Capacidades</div>
                 <h2 className="section-title">
@@ -173,15 +226,23 @@ function Home() {
               </p>
             </div>
             <div className="cap-grid">
-              {capabilities.map(([index, title, copy, Icon]) => (
+              {capabilities.map(([index, title, copy, Icon], position) => (
                 <article
-                  className="cap-card"
+                  className="panel cap-card"
                   key={index}
+                  data-reveal
+                  style={stagger(position % 3)}
+                  onPointerMove={spotlight}
                   data-testid={`card-capability-${index}`}
                 >
-                  <span className="cap-icon" aria-hidden="true">
-                    <Icon size={23} strokeWidth={1.5} />
-                  </span>
+                  <div className="cap-top">
+                    <span className="cap-icon" aria-hidden="true">
+                      <Icon size={22} strokeWidth={1.5} />
+                    </span>
+                    <span className="cap-index" aria-hidden="true">
+                      {index}
+                    </span>
+                  </div>
                   <h3>{title}</h3>
                   <p>{copy}</p>
                 </article>
@@ -192,24 +253,28 @@ function Home() {
 
         <section className="section work" id="work" tabIndex={-1}>
           <div className="wrap">
-            <div className="section-label">Em campo</div>
-            <h2 className="section-title">
-              O cuidado começa <em>nos bastidores.</em>
-            </h2>
+            <div data-reveal>
+              <div className="section-label">Em campo</div>
+              <h2 className="section-title">
+                O cuidado começa <em>nos bastidores.</em>
+              </h2>
+            </div>
             <div className="work-grid">
               <article
                 className="work-feature"
+                data-reveal
                 data-testid="card-project-pragma-base"
               >
-                <img
-                  className="work-media"
-                  src={facadeImage}
-                  alt="Fachada da base PRAGMA, com a van da equipe estacionada em frente"
-                  width={1536}
-                  height={1024}
-                  loading="lazy"
-                  decoding="async"
-                />
+                <div className="frame frame-corners work-media">
+                  <img
+                    src={facadeImage}
+                    alt="Fachada da base PRAGMA, com a van da equipe estacionada em frente"
+                    width={1536}
+                    height={1024}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
                 <div className="work-bottom">
                   <p className="section-label">Base PRAGMA / Brasília, DF</p>
                   <h3>O lugar também faz parte do show.</h3>
@@ -218,18 +283,22 @@ function Home() {
               </article>
               <div className="work-stack">
                 <article
-                  className="work-tile"
+                  className="panel work-tile"
+                  data-reveal
+                  style={stagger(1, 110)}
+                  onPointerMove={spotlight}
                   data-testid="card-project-summit"
                 >
-                  <img
-                    className="work-tile-media"
-                    src={stagePhoto}
-                    alt="Câmera em tripé no canto do palco de um show em tenda, com painel de LED ao fundo."
-                    width={1280}
-                    height={960}
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <div className="frame work-tile-media">
+                    <img
+                      src={stagePhoto}
+                      alt="Câmera em tripé no canto do palco de um show em tenda, com painel de LED ao fundo."
+                      width={1280}
+                      height={960}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
                   <div>
                     <h3>O palco é só uma parte.</h3>
                     <p>
@@ -239,18 +308,22 @@ function Home() {
                   </div>
                 </article>
                 <article
-                  className="work-tile"
+                  className="panel work-tile"
+                  data-reveal
+                  style={stagger(2, 110)}
+                  onPointerMove={spotlight}
                   data-testid="card-project-stream"
                 >
-                  <img
-                    className="work-tile-media"
-                    src={streamPhoto}
-                    alt="Mesa de som, notebook com software de transmissão e switcher durante a gravação de um podcast."
-                    width={1280}
-                    height={960}
-                    loading="lazy"
-                    decoding="async"
-                  />
+                  <div className="frame work-tile-media">
+                    <img
+                      src={streamPhoto}
+                      alt="Mesa de som, notebook com software de transmissão e switcher durante a gravação de um podcast."
+                      width={1280}
+                      height={960}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
                   <div>
                     <h3>Presença não tem distância.</h3>
                     <p>
@@ -259,7 +332,7 @@ function Home() {
                     </p>
                   </div>
                 </article>
-                <p className="work-statement">
+                <p className="work-statement" data-reveal style={stagger(3, 110)}>
                   O plano é importante.
                   <br />
                   <span>O momento é tudo.</span>
@@ -275,7 +348,7 @@ function Home() {
           aria-labelledby="gallery-title"
           tabIndex={-1}
         >
-          <div className="wrap">
+          <div className="wrap" data-reveal>
             <div className="section-label">Bastidores</div>
             <h2 className="section-title" id="gallery-title">
               Gente de verdade, <em>fazendo acontecer.</em>
@@ -286,7 +359,7 @@ function Home() {
 
         <section className="section process" id="method" tabIndex={-1}>
           <div className="wrap process-layout">
-            <div className="process-intro">
+            <div className="process-intro" data-reveal>
               <div className="section-label">Método</div>
               <h2 className="section-title">
                 Do primeiro rascunho ao <em>último aplauso.</em>
@@ -297,43 +370,16 @@ function Home() {
               </p>
             </div>
             <ol className="steps">
-              {[
-                [
-                  "01",
-                  "Escutar",
-                  "Entender o que precisa ser dito, e o que não pode dar errado.",
-                ],
-                [
-                  "02",
-                  "Desenhar",
-                  "Traduzir ideia em planta, timeline, rider e plano B.",
-                ],
-                [
-                  "03",
-                  "Preparar",
-                  "Alinhar equipe, equipamento e expectativa na mesma frequência.",
-                ],
-                [
-                  "04",
-                  "Executar",
-                  "Estar presente, atento e um passo à frente do momento.",
-                ],
-                [
-                  "05",
-                  "Entregar",
-                  "Fechar o ciclo com o mesmo cuidado que abriu.",
-                ],
-              ].map(([num, title, copy]) => (
+              {method.map(([num, title, copy]) => (
                 <li
                   className="step"
                   key={num}
+                  data-inview
                   data-testid={`step-method-${num}`}
                 >
                   <span className="step-index">{num}</span>
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{copy}</p>
-                  </div>
+                  <h3>{title}</h3>
+                  <p>{copy}</p>
                 </li>
               ))}
             </ol>
@@ -342,12 +388,12 @@ function Home() {
 
         <section className="section contact" id="contact" tabIndex={-1}>
           <div className="wrap contact-layout">
-            <div>
+            <div data-reveal>
               <div className="eyebrow mono">Vamos produzir</div>
               <h2>
                 Tem uma ideia?
                 <br />
-                <span>Vamos fazer.</span>
+                <span className="accent-gradient">Vamos fazer.</span>
               </h2>
               <p className="contact-note">
                 Conte o que está planejando. Vamos encontrar um caminho claro
@@ -360,7 +406,9 @@ function Home() {
                 ola@pragma.live <ArrowUpRight size={18} aria-hidden="true" />
               </a>
             </div>
-            <ContactForm />
+            <div data-reveal style={stagger(1, 120)}>
+              <ContactForm />
+            </div>
           </div>
         </section>
       </main>
@@ -380,6 +428,7 @@ function Home() {
           </nav>
         </div>
       </footer>
+      <div className="fx-grain" aria-hidden="true" />
     </div>
   );
 }

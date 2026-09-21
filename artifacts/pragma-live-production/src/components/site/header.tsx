@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Brand } from "./brand";
+import { useScrollProgress } from "./motion";
 
 const links = [
   ["capabilities", "Capacidades"],
@@ -12,6 +13,7 @@ const links = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("");
+  const { progress, stuck } = useScrollProgress();
   const ref = useRef<HTMLElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
@@ -70,6 +72,7 @@ export function Header() {
     <header
       ref={ref}
       className="topbar"
+      data-stuck={stuck}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node))
           setOpen(false);
@@ -122,6 +125,11 @@ export function Header() {
           ))}
         </nav>
       </div>
+      <div
+        className="topbar-progress"
+        style={{ "--progress": progress } as CSSProperties}
+        aria-hidden="true"
+      />
     </header>
   );
 }
