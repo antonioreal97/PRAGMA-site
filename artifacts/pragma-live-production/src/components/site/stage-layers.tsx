@@ -26,19 +26,16 @@ type Layer = {
   id: string;
   name: string;
   note: string;
-  z: number;
-  /* Onde a etiqueta pousa, para as quatro não se empilharem. */
-  tag: [string, string];
 };
 
-const layers: Layer[] = [
-  { id: "imagem", name: "Imagem", note: "LED e captação", z: -210, tag: ["78%", "20%"] },
-  { id: "luz", name: "Luz", note: "Truss e desenho", z: -70, tag: ["22%", "78%"] },
-  { id: "som", name: "Som", note: "Line array", z: 70, tag: ["13%", "34%"] },
-  { id: "infra", name: "Infraestrutura", note: "Energia e cabo", z: 210, tag: ["58%", "4%"] },
-];
+const LAYOUT: Record<string, { z: number; tag: [string, string] }> = {
+  imagem: { z: -210, tag: ["78%", "20%"] },
+  luz: { z: -70, tag: ["22%", "78%"] },
+  som: { z: 70, tag: ["13%", "34%"] },
+  infra: { z: 210, tag: ["58%", "4%"] },
+};
 
-export function StageLayers() {
+export function StageLayers({ layers }: { layers: Layer[] }) {
   const ref = useRef<HTMLDivElement>(null);
   // Camada fixada por clique, toque ou teclado. O hover só pré-visualiza;
   // quando o ponteiro sai, a cena volta para a camada escolhida.
@@ -66,6 +63,16 @@ export function StageLayers() {
     node.style.removeProperty("--pitch");
   }, []);
 
+  const resolved = layers.map((layer) => {
+    const layout = LAYOUT[layer.id];
+    if (!layout) {
+      throw new Error(
+        `Camada de anatomia desconhecida: "${layer.id}". IDs válidos: ${Object.keys(LAYOUT).join(", ")}.`,
+      );
+    }
+    return { ...layer, ...layout };
+  });
+
   return (
     <div
       className="stage3d"
@@ -81,7 +88,7 @@ export function StageLayers() {
         data-active={active ?? undefined}
         aria-label="Camadas do palco"
       >
-        {layers.map((layer) => (
+        {resolved.map((layer) => (
           <li
             className="stage-layer"
             key={layer.id}
@@ -164,7 +171,7 @@ export function StageLayers() {
           cortadas. A mesma informação vira legenda abaixo da cena; só uma
           das duas existe por vez, então nada é lido em dobro. */}
       <ul className="stage-legend" aria-label="Camadas do palco">
-        {layers.map((layer) => (
+        {resolved.map((layer) => (
           <li key={layer.id}>
             <button
               type="button"

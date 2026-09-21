@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import coverImage from "@assets/pragma-brand-cover.png";
-import heroVideo from "@assets/1108328_1080p_4k_1280x720_1789673316521.mp4";
 
-/**
- * Fundo da abertura em camadas: vídeo, escurecimento que protege a leitura,
- * brilho de palco, malha técnica e um feixe lento. O vídeo só roda quando
- * está à vista, com a aba ativa e sem preferência por menos movimento.
- */
-export function HeroMedia() {
+export function HeroMedia({
+  poster,
+  videoUrl,
+}: {
+  poster: string;
+  videoUrl?: string;
+}) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [available, setAvailable] = useState(true);
+  const [available, setAvailable] = useState(Boolean(videoUrl));
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
@@ -37,22 +36,26 @@ export function HeroMedia() {
       document.removeEventListener("visibilitychange", sync);
       video.pause();
     };
-  }, []);
+  }, [videoUrl]);
   return (
     <div aria-hidden="true">
       <div className="hero-media">
-        {!available && <img src={coverImage} alt="" width={1536} height={1024} />}
-        <video
-          ref={ref}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          poster={coverImage}
-          onError={() => setAvailable(false)}
-          src={heroVideo}
-        />
+        {(!available || !videoUrl) && (
+          <img src={poster} alt="" width={1536} height={1024} />
+        )}
+        {videoUrl && (
+          <video
+            ref={ref}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            poster={poster}
+            onError={() => setAvailable(false)}
+            src={videoUrl}
+          />
+        )}
       </div>
       <div className="hero-scrim" />
       <div className="hero-glow" />

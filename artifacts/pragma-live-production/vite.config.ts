@@ -1,7 +1,7 @@
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
@@ -17,9 +17,35 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH || '/';
 
+function rewriteStudio(req: { url?: string }) {
+  const url = req.url?.split('?')[0] ?? '';
+  if (url === '/studio' || url.startsWith('/studio/')) {
+    req.url = '/studio.html';
+  }
+}
+
+function studioRewrite(): Plugin {
+  return {
+    name: 'studio-rewrite',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        rewriteStudio(req);
+        next();
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        rewriteStudio(req);
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
+    studioRewrite(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
@@ -53,6 +79,15 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(import.meta.dirname, 'index.html'),
+        studio: path.resolve(import.meta.dirname, 'studio.html'),
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['styled-components', 'react/jsx-runtime'],
   },
   server: {
     port,

@@ -3,6 +3,16 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/studio"
+  to = "/studio.html"
+  status = 200
+
+[[redirects]]
+  from = "/studio/*"
+  to = "/studio.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

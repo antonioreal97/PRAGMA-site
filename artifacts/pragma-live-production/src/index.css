@@ -1183,91 +1183,454 @@ html.motion-ok .hero-cue svg {
   -webkit-user-drag: none;
 }
 
-/* ---- Método ----------------------------------------------------------- */
-.process {
+/* ---- Método: história em tela cheia ------------------------------------ */
+/* A seção é alta: uma abertura e uma tela por etapa. O palco fica preso no
+   topo enquanto a trilha de texto rola por cima dele — a margem negativa faz
+   as duas começarem no mesmo ponto. O palco usa lvh (a maior altura do
+   celular) para não sobrar uma faixa vazia embaixo quando a barra do
+   navegador recolhe. */
+.method {
   position: relative;
-  background: var(--ink-soft);
-  border-block: 1px solid var(--line);
-  overflow: hidden;
-}
-.process-layout {
-  display: grid;
-  grid-template-columns: 1fr 1.05fr;
-  gap: clamp(40px, 8vw, 100px);
-}
-.process-intro p {
-  max-width: 380px;
-  margin-top: 24px;
-  color: var(--paper-dim);
-}
-/* Trilho de sinal: cada etapa acende quando entra na leitura. */
-.steps {
-  position: relative;
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0 58px;
-}
-.steps::before {
-  content: "";
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 21px;
-  width: 1px;
-  background: var(--line);
-}
-.step {
-  position: relative;
-  padding: 26px 0;
+  background: var(--ink);
   border-bottom: 1px solid var(--line);
 }
-.step:first-child {
-  padding-top: 0;
+.method-stage {
+  --count: 5;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100vh;
+  height: 100lvh;
+  overflow: hidden;
+  background: var(--ink);
 }
-.step:last-child {
-  border: 0;
-  padding-bottom: 0;
-}
-.step-index {
+.method-frames {
   position: absolute;
-  left: -58px;
-  top: 22px;
+  inset: 0;
+}
+.method-frame {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.method-frame[data-state="active"] {
+  opacity: 1;
+}
+.method-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus-wide, 50% 50%);
+}
+/* Travelling lento: a foto entra aproximada e abre enquanto a etapa é lida.
+   Quem sai termina em 1,04 e quem entra começa em 1,12 — exatamente onde o
+   movimento de cada uma para e recomeça. Por isso rolar para trás ou para
+   a frente nunca dá salto. */
+html.motion-ok .method-frame img {
+  transform: scale(var(--dolly, 1.04));
+}
+html.motion-ok .method-frame[data-state="future"] {
+  --dolly: 1.12;
+}
+html.motion-ok .method-frame[data-state="active"] {
+  --dolly: calc(1.12 - 0.08 * var(--local, 0));
+}
+html.motion-ok .method-frame[data-state="active"] img {
+  will-change: transform;
+}
+.method-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(6 9 7 / 0.78),
+      rgb(6 9 7 / 0) 30%,
+      rgb(6 9 7 / 0) 50%,
+      rgb(6 9 7 / 0.88)
+    ),
+    linear-gradient(90deg, rgb(6 9 7 / 0.6), rgb(6 9 7 / 0) 58%),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(6 9 7 / 0.5));
+}
+/* Na abertura, o título fica sobre a foto: um véu garante a leitura. Ele se
+   recolhe quando a primeira tarja pousa, como luz subindo no palco. */
+.method-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgb(6 9 7 / 0.78);
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.method-stage[data-intro] .method-veil {
+  opacity: 1;
+}
+
+/* Visor: cantos de enquadramento, como no monitor de uma câmera. */
+.method-corners {
+  --c: rgb(237 240 232 / 0.55);
+  --arm: 22px;
+  position: absolute;
+  inset: calc(var(--header-h) + 18px) var(--gutter) 24px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) 0 0 / var(--arm) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--arm) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / var(--arm) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--arm) no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / var(--arm) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--arm) no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / var(--arm) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--arm) no-repeat;
+}
+.method-hud {
+  position: absolute;
+  top: calc(var(--header-h) + 34px);
+  left: calc(var(--gutter) + 18px);
+  right: calc(var(--gutter) + 18px);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+  transition: opacity 600ms var(--ease);
+}
+.method-stage[data-intro] .method-hud {
+  opacity: 0;
+}
+/* Texto miúdo sobre foto precisa de chão próprio: a pílula garante o
+   contraste independente do que estiver atrás. */
+.method-hud-pill {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 13px;
+  border: 1px solid rgb(237 240 232 / 0.14);
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--ink-soft);
-  font: 400 0.75rem var(--font-brand-mono);
+  background: rgb(6 9 7 / 0.74);
+  backdrop-filter: blur(10px);
+  color: var(--paper);
+}
+/* O ponto pulsa só na etapa ao vivo; nas outras fica aceso e parado. */
+html.motion-ok .live-dot[data-still]::after {
+  display: none;
+}
+
+/* Trilho de capítulos: à direita no desktop, clicável. */
+.method-rail {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--gutter) + 18px);
+  z-index: 2;
+  transform: translateY(-50%);
+  transition: opacity 600ms var(--ease);
+}
+.method-stage[data-intro] .method-rail {
+  opacity: 0.6;
+}
+.method-rail ol {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid rgb(237 240 232 / 0.12);
+  border-radius: 16px;
+  background: rgb(6 9 7 / 0.7);
+  backdrop-filter: blur(12px);
+}
+.method-rail a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 8px 0 12px;
+  border-radius: 10px;
+  font-family: var(--font-brand-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
   color: var(--paper-dim);
   transition:
     color var(--duration) var(--ease),
-    border-color var(--duration) var(--ease),
-    box-shadow var(--duration) var(--ease),
     background-color var(--duration) var(--ease);
 }
-.step:first-child .step-index {
-  top: -4px;
-}
-.step.is-in .step-index,
-html:not(.motion-ok) .step .step-index {
+.method-rail a[aria-current="step"] {
   color: var(--acid);
-  border-color: rgb(33 224 93 / 0.45);
-  background: radial-gradient(120% 120% at 30% 0%, rgb(33 224 93 / 0.18), var(--ink-soft));
-  box-shadow: 0 0 22px -6px rgb(33 224 93 / 0.7);
 }
-.step h3 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  letter-spacing: -0.025em;
+.method-rail-bar {
+  position: relative;
+  width: 2px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(237 240 232 / 0.18);
 }
-.step p {
-  margin-top: 8px;
-  max-width: 460px;
+/* Cada barra enche com a leitura da própria etapa: as anteriores cheias, a
+   atual parcial, as próximas vazias — tudo a partir de um só --progress. */
+.method-rail-bar i {
+  position: absolute;
+  inset: 0;
+  background: var(--acid);
+  box-shadow: 0 0 10px rgb(33 224 93 / 0.8);
+  transform: scaleY(clamp(0, calc(var(--progress, 0) * var(--count) - var(--i)), 1));
+  transform-origin: 50% 0;
+}
+
+/* A trilha não recebe ponteiro: ela cobre o palco inteiro e esconderia o
+   trilho de capítulos. Só o que se lê volta a receber. */
+.method-track {
+  position: relative;
+  z-index: 1;
+  margin-top: -100vh;
+  margin-top: -100lvh;
+  pointer-events: none;
+}
+.method-intro .wrap > *,
+.method-card {
+  pointer-events: auto;
+}
+.method-intro {
+  display: grid;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-block: calc(var(--header-h) + 48px) 96px;
+}
+.method-intro .section-title {
+  max-width: 880px;
+  font-size: clamp(2.6rem, 6.2vw, 5.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+}
+.method-intro .section-title + p {
+  max-width: 440px;
+  margin-top: 26px;
+  font-size: 1.125rem;
   color: var(--paper-dim);
-  font-size: 0.9375rem;
+}
+.method-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 44px;
+  color: var(--paper-dim);
+}
+html.motion-ok .method-cue svg {
+  animation: cue 2.6s var(--ease) infinite;
+}
+.method-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Coluna: o miolo cresce na altura (o sticky da tarja precisa de um bloco
+   alto) sem crescer na largura — em linha, flex: 1 engoliria a margem do
+   .wrap e a tarja encostaria na borda da tela. */
+.method-step {
+  display: flex;
+  flex-direction: column;
+  min-height: 108vh;
+  min-height: 108svh;
+}
+.method-step-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+/* A tarja: presa acima da borda de baixo enquanto a etapa é lida. Chega
+   grudada no topo do próprio bloco, pousa, segura e sai empurrada pela
+   seguinte — o mesmo ritmo de um letreiro de transmissão. */
+.method-card {
+  position: sticky;
+  bottom: max(7svh, 28px);
+  width: min(100%, 580px);
+  padding: 28px 32px 24px 36px;
+  overflow: hidden;
+  border: 1px solid rgb(237 240 232 / 0.12);
+  border-radius: var(--radius-panel);
+  background: rgb(6 9 7 / 0.8);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow-panel);
+  opacity: 0.5;
+  transition:
+    opacity 500ms var(--ease),
+    border-color 500ms var(--ease);
+}
+.method-card:focus {
+  outline: none;
+}
+.method-card:focus-visible {
+  outline: 2px solid var(--acid);
+  outline-offset: 4px;
+}
+.method-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--acid);
+  box-shadow: 0 0 18px rgb(33 224 93 / 0.9);
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+  transition: transform 600ms var(--ease-out);
+}
+.method-step[data-active] .method-card {
+  opacity: 1;
+  border-color: rgb(237 240 232 / 0.2);
+}
+.method-step[data-active] .method-card::before {
+  transform: scaleY(1);
+}
+.method-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  color: var(--paper-dim);
+}
+.method-card-meta span {
+  color: var(--acid);
+}
+.method-card h3 {
+  font-size: clamp(2.1rem, 3.6vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+.method-card-copy {
+  max-width: 440px;
+  margin-top: 12px;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--paper-dim);
+}
+/* A legenda é frase, não rótulo: mono, mas sem caixa-alta. */
+.method-card-caption {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 0.6875rem;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--paper-dim);
+}
+.method-card-caption svg {
+  margin-top: 2px;
+  color: var(--acid);
+}
+.caption-tall:not(.caption-wide) {
+  display: none;
+}
+/* Mesmo corte do <source media> em method-story.tsx: foto em pé, foco e
+   legenda da foto em pé. */
+@media (orientation: portrait) {
+  .method-frame img {
+    object-position: var(--focus-tall, 50% 50%);
+  }
+  .caption-tall:not(.caption-wide) {
+    display: inline;
+  }
+  .caption-wide:not(.caption-tall) {
+    display: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .method-rail a:hover {
+    color: var(--paper);
+    background: rgb(237 240 232 / 0.07);
+  }
+  .method-rail a[aria-current="step"]:hover {
+    color: var(--acid);
+  }
+}
+@media (max-width: 760px) {
+  /* No celular o trilho vira uma régua no topo; os nomes continuam lá para
+     leitores de tela, só saem da vista. */
+  .method-rail {
+    top: calc(var(--header-h) + 10px);
+    left: var(--gutter);
+    right: var(--gutter);
+    transform: none;
+  }
+  .method-rail ol {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .method-rail a {
+    justify-content: center;
+    min-height: 44px;
+    padding: 0;
+  }
+  .method-rail-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .method-rail-bar {
+    width: 100%;
+    height: 3px;
+  }
+  .method-rail-bar i {
+    transform: scaleX(clamp(0, calc(var(--progress, 0) * var(--count) - var(--i)), 1));
+    transform-origin: 0 50%;
+  }
+  .method-hud {
+    top: calc(var(--header-h) + 62px);
+    left: var(--gutter);
+    right: var(--gutter);
+  }
+  .method-corners {
+    --arm: 16px;
+    inset: calc(var(--header-h) + 56px) 10px 10px;
+  }
+  .method-intro {
+    padding-block: calc(var(--header-h) + 96px) 72px;
+  }
+  .method-step {
+    min-height: 96vh;
+    min-height: 96svh;
+  }
+  .method-card {
+    bottom: max(14px, env(safe-area-inset-bottom));
+    padding: 22px 20px 18px 24px;
+  }
+  .method-card h3 {
+    font-size: 2.1rem;
+  }
+  .method-card-copy {
+    font-size: 1rem;
+  }
+}
+@media (prefers-contrast: more) {
+  .method-card,
+  .method-hud-pill,
+  .method-rail ol {
+    background: rgb(6 9 7 / 0.94);
+  }
 }
 
 /* ---- Contato ---------------------------------------------------------- */
@@ -2062,10 +2425,6 @@ html.motion-ok .fixture-beam {
   .work-grid {
     gap: 36px;
   }
-  .process-layout {
-    grid-template-columns: 1fr 1.15fr;
-    gap: 36px;
-  }
   .contact-form {
     max-width: 640px;
     width: 100%;
@@ -2110,8 +2469,7 @@ html.motion-ok .fixture-beam {
     max-width: 100%;
   }
   .cap-grid,
-  .work-grid,
-  .process-layout {
+  .work-grid {
     grid-template-columns: 1fr;
   }
   .cap-top {
@@ -2136,20 +2494,6 @@ html.motion-ok .fixture-beam {
   }
   .gallery-track {
     gap: 12px;
-  }
-  .process-layout {
-    gap: 44px;
-  }
-  .steps {
-    padding-left: 46px;
-  }
-  .steps::before {
-    left: 17px;
-  }
-  .step-index {
-    left: -46px;
-    width: 36px;
-    height: 36px;
   }
   .contact-form {
     padding: 24px 20px;

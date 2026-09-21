@@ -11,19 +11,20 @@ import { motionAllowed } from "./motion";
  * de frente, como na cena do palco.
  */
 
-const stations = [
-  {
-    id: "captacao",
-    name: "Captação",
-    note: "Câmeras e microfones",
-    Icon: Video,
-  },
-  { id: "corte", name: "Corte", note: "Switcher ao vivo", Icon: Shuffle },
-  { id: "encode", name: "Encode", note: "Compressão e redundância", Icon: Cpu },
-  { id: "entrega", name: "Entrega", note: "Quem assiste de longe", Icon: Globe },
-];
+const ICONS = {
+  captacao: Video,
+  corte: Shuffle,
+  encode: Cpu,
+  entrega: Globe,
+} as const;
 
-export function SignalChain() {
+type Station = {
+  id: string;
+  name: string;
+  note: string;
+};
+
+export function SignalChain({ stations }: { stations: Station[] }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const track = useCallback((event: PointerEvent<HTMLDivElement>) => {
@@ -54,7 +55,14 @@ export function SignalChain() {
       <div className="chain3d-scene">
         <span className="chain-floor" aria-hidden="true" />
         <ol className="chain-rail">
-          {stations.map(({ id, name, note, Icon }, index) => (
+          {stations.map(({ id, name, note }, index) => {
+            const Icon = ICONS[id as keyof typeof ICONS];
+            if (!Icon) {
+              throw new Error(
+                `Estação de broadcast desconhecida: "${id}". IDs válidos: ${Object.keys(ICONS).join(", ")}.`,
+              );
+            }
+            return (
             <li
               className="chain-node"
               key={id}
@@ -77,7 +85,8 @@ export function SignalChain() {
                 {note}
               </span>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </div>
     </div>

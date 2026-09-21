@@ -9,111 +9,176 @@ import {
   RadioTower,
   Users,
 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/site/brand";
+import { CmsError, CmsLoading } from "@/components/site/cms-status";
 import { Header } from "@/components/site/header";
 import { HeroMedia } from "@/components/site/hero-media";
 import { ContactForm } from "@/components/site/contact-form";
 import { useSiteMotion, useSpotlight } from "@/components/site/motion";
 import { StageLayers } from "@/components/site/stage-layers";
 import { SignalChain } from "@/components/site/signal-chain";
+import { MethodStory, type MethodStep } from "@/components/site/method-story";
 import NotFound from "@/pages/not-found";
 import { Route, Switch, Router as WouterRouter } from "wouter";
 import { PhotoGallery } from "@/components/site/photo-gallery";
-import facadeImage from "@assets/pragma-facade-vehicle.jpg";
-import teamPhoto from "@/assets/photos/equipe.jpg";
-import stagePhoto from "@/assets/photos/palco-tenda.jpg";
-import streamPhoto from "@/assets/photos/streaming-mesa.jpg";
+import {
+  fileUrl,
+  hotspotFocus,
+  imageDimensions,
+  sanityImage,
+  tallImage,
+  wideImage,
+} from "@/sanity/image";
+import type { HomePage, SanityImage, SiteSettings } from "@/sanity/types";
+import { useHomePage } from "@/sanity/use-home-page";
 
 const queryClient = new QueryClient();
 
-/** Atraso em cascata para um grupo revelado junto. */
+const CAPABILITY_ICONS: Record<string, LucideIcon> = {
+  som: AudioLines,
+  luz: Lightbulb,
+  imagem: MonitorPlay,
+  infraestrutura: Cable,
+  streaming: RadioTower,
+  producao: Users,
+};
+
 const stagger = (index: number, step = 70): CSSProperties =>
   ({ "--reveal-delay": `${index * step}ms` }) as CSSProperties;
 
-const capabilities: [string, string, string, LucideIcon][] = [
-  [
-    "01",
-    "Som",
-    "Clareza para cada palavra, impacto para cada momento. Sistemas pensados para a sala e para quem está em cena.",
-    AudioLines,
-  ],
-  [
-    "02",
-    "Luz",
-    "Desenhamos atmosferas que acompanham o ritmo da ideia, do primeiro foco ao último blackout.",
-    Lightbulb,
-  ],
-  [
-    "03",
-    "Imagem",
-    "LED walls, captação e transmissão: o que acontece no espaço, chega inteiro a qualquer lugar.",
-    MonitorPlay,
-  ],
-  [
-    "04",
-    "Infraestrutura",
-    "A camada invisível que segura tudo. Logística, rigging e energia coordenados no detalhe.",
-    Cable,
-  ],
-  [
-    "05",
-    "Streaming",
-    "A mesma presença, dentro e fora do espaço. Realização, distribuição e contingência em tempo real.",
-    RadioTower,
-  ],
-  [
-    "06",
-    "Produção",
-    "Pessoas certas, no lugar certo, antes mesmo de alguém pedir. A operação como extensão do seu time.",
-    Users,
-  ],
-];
+function AccentTitle({
+  title,
+  accent,
+  stacked,
+}: {
+  title: string;
+  accent?: string;
+  stacked?: boolean;
+}) {
+  if (!accent) return title;
+  const mark = <em>{accent}</em>;
+  return stacked ? (
+    <>
+      {title}
+      <br />
+      {mark}
+    </>
+  ) : (
+    <>
+      {title} {mark}
+    </>
+  );
+}
 
-const method: [string, string, string][] = [
-  [
-    "01",
-    "Escutar",
-    "Entender o que precisa ser dito, e o que não pode dar errado.",
-  ],
-  ["02", "Desenhar", "Traduzir ideia em planta, timeline, rider e plano B."],
-  [
-    "03",
-    "Preparar",
-    "Alinhar equipe, equipamento e expectativa na mesma frequência.",
-  ],
-  ["04", "Executar", "Estar presente, atento e um passo à frente do momento."],
-  ["05", "Entregar", "Fechar o ciclo com o mesmo cuidado que abriu."],
-];
+function requireImage(image: SanityImage | undefined, label: string) {
+  if (!image?.asset) {
+    throw new Error(`Imagem ausente no Sanity: ${label}.`);
+  }
+  return image;
+}
+
+function mappedPhoto(image: SanityImage, alt: string, caption: string) {
+  const { src, srcSet } = sanityImage(image);
+  const { width, height } = imageDimensions(image);
+  return { src, srcSet, width, height, alt, caption };
+}
+
+function mappedStep(step: HomePage["method"]["steps"][number]): MethodStep {
+  const wideAsset = requireImage(step.wide?.image, `método ${step.id} wide`);
+  const tallAsset = step.tall?.image?.asset ? step.tall.image : undefined;
+  return {
+    id: step.id,
+    num: step.num,
+    phase: step.phase,
+    title: step.title,
+    copy: step.copy,
+    wide: {
+      ...wideImage(wideAsset),
+      caption: step.wide.caption,
+      focus: hotspotFocus(wideAsset),
+    },
+    tall:
+      tallAsset && step.tall?.caption
+        ? {
+            ...tallImage(tallAsset),
+            caption: step.tall.caption,
+            focus: hotspotFocus(tallAsset),
+          }
+        : undefined,
+  };
+}
 
 function Home() {
+  const page = useHomePage();
+  if (page.isPending) return <CmsLoading />;
+  if (page.isError) {
+    const error =
+      page.error instanceof Error
+        ? page.error
+        : new Error(String(page.error));
+    return <CmsError error={error} onRetry={() => void page.refetch()} />;
+  }
+  return <HomeLoaded home={page.data.home} settings={page.data.settings} />;
+}
+
+function HomeLoaded({
+  home,
+  settings,
+}: {
+  home: HomePage;
+  settings: SiteSettings;
+}) {
   useSiteMotion();
   const spotlight = useSpotlight();
+
+  useEffect(() => {
+    document.title = settings.seoTitle;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", settings.seoDescription);
+  }, [settings.seoDescription, settings.seoTitle]);
+
+  const poster = sanityImage(requireImage(home.hero.poster, "hero poster")).src;
+  const video = fileUrl(home.hero.video);
+  const aboutImage = requireImage(home.about.image, "about");
+  const aboutPhoto = mappedPhoto(aboutImage, home.about.alt, home.about.caption);
+  const galleryPhotos = home.gallery.photos.map((photo, index) =>
+    mappedPhoto(
+      requireImage(photo.image, `galeria ${index + 1}`),
+      photo.alt,
+      photo.caption,
+    ),
+  );
+  const methodSteps = home.method.steps.map(mappedStep);
+  const [feature, ...tiles] = home.work.cards;
+  if (!feature) {
+    throw new Error("Seção Em campo no Sanity precisa de ao menos um card.");
+  }
 
   return (
     <div className="pragma-page">
       <a className="skip-link" href="#top">
         Pular para o conteúdo
       </a>
-      <Header />
+      <Header links={settings.nav} />
       <main id="top" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
-          <HeroMedia />
+          <HeroMedia poster={poster} videoUrl={video} />
           <div className="wrap hero-grid">
             <div className="hero-content">
               <p className="eyebrow mono">
                 <span className="live-dot" aria-hidden="true" />
-                Live production / desde 2016
+                {home.hero.eyebrow}
               </p>
               <h1 id="hero-title">
                 <span className="hero-line">
                   <span style={{ "--line-delay": "80ms" } as CSSProperties}>
-                    A ideia entra.
+                    {home.hero.titleLine1}
                   </span>
                 </span>
                 <span className="hero-line">
@@ -121,38 +186,34 @@ function Home() {
                     className="accent-gradient"
                     style={{ "--line-delay": "220ms" } as CSSProperties}
                   >
-                    A experiência acontece.
+                    {home.hero.titleLine2}
                   </span>
                 </span>
               </h1>
-              <p className="hero-copy">
-                Som, luz, imagem e pessoas. Uma operação integrada para
-                transformar a sua ideia em um evento que marca.
-              </p>
+              <p className="hero-copy">{home.hero.copy}</p>
               <div className="hero-actions">
                 <Button asChild size="lg">
-                  <a href="#contact" data-testid="link-hero-contact">
-                    Começar uma conversa <ArrowUpRight aria-hidden="true" />
+                  <a href={home.hero.primaryCtaHref} data-testid="link-hero-contact">
+                    {home.hero.primaryCtaLabel}{" "}
+                    <ArrowUpRight aria-hidden="true" />
                   </a>
                 </Button>
-                <a className="text-link" href="#capabilities">
-                  Conheça nossas capacidades{" "}
+                <a className="text-link" href={home.hero.secondaryCtaHref}>
+                  {home.hero.secondaryCtaLabel}{" "}
                   <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
               </div>
             </div>
           </div>
-          {/* Faixa de operação: as camadas que a PRAGMA opera, como um
-              painel de canais. Conteúdo real, sem número inventado. */}
           <div className="hero-console" aria-hidden="true">
             <div className="wrap">
               <ul className="mono">
-                {capabilities.map(([index, title], position) => (
-                  <li key={index} className={position > 2 ? "optional" : ""}>
-                    {title}
+                {home.capabilities.items.map((item, position) => (
+                  <li key={item.num} className={position > 2 ? "optional" : ""}>
+                    {item.title}
                   </li>
                 ))}
-                <li className="hero-console-now">Brasília, DF</li>
+                <li className="hero-console-now">{home.hero.consoleLocation}</li>
               </ul>
             </div>
           </div>
@@ -161,41 +222,35 @@ function Home() {
         <section className="section intro" id="about" tabIndex={-1}>
           <div className="wrap intro-layout">
             <div data-reveal>
-              <div className="section-label">O que fazemos</div>
+              <div className="section-label">{home.about.label}</div>
               <h2 className="section-title">
-                Produção é parte da <em>ideia.</em>
+                <AccentTitle
+                  title={home.about.title}
+                  accent={home.about.titleAccent}
+                />
               </h2>
               <figure className="intro-photo">
                 <div className="frame frame-corners">
                   <img
-                    src={teamPhoto}
-                    alt="Cinco integrantes da equipe, de casaco preto, lado a lado em um evento noturno."
-                    width={796}
-                    height={528}
+                    src={aboutPhoto.src}
+                    srcSet={aboutPhoto.srcSet}
+                    sizes="(max-width: 900px) 92vw, 42vw"
+                    alt={aboutPhoto.alt}
+                    width={aboutPhoto.width}
+                    height={aboutPhoto.height}
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
-                <figcaption className="mono">A equipe em campo</figcaption>
+                <figcaption className="mono">{home.about.caption}</figcaption>
               </figure>
             </div>
             <div className="intro-copy" data-reveal style={stagger(1, 120)}>
-              <p>
-                A PRAGMA entra cedo. Antes da primeira luz, existe uma conversa,
-                um mapa, uma decisão. Trabalhamos ao lado de marcas, agências e
-                criadores para transformar intenção em uma experiência que pode
-                ser sentida.
-              </p>
-              <p>
-                Do briefing ao último cabo recolhido, existe método. E existe
-                gente.
-              </p>
+              {home.about.copy.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
               <div className="number-list">
-                {[
-                  "Leitura precisa do que você quer dizer.",
-                  "Desenho técnico que não aparece, mas funciona.",
-                  "Execução humana, atenta e sem ruído.",
-                ].map((copy, index) => (
+                {home.about.points.map((copy, index) => (
                   <div className="number-item" key={copy}>
                     <span className="num">/ 0{index + 1}</span>
                     <p>{copy}</p>
@@ -206,7 +261,6 @@ function Home() {
           </div>
         </section>
 
-        {/* Vista explodida: as camadas que viram um evento, em 3D. */}
         <section
           className="section anatomy"
           id="anatomy"
@@ -215,18 +269,18 @@ function Home() {
         >
           <div className="wrap anatomy-head" data-reveal>
             <div>
-              <div className="section-label">Anatomia</div>
+              <div className="section-label">{home.anatomy.label}</div>
               <h2 className="section-title" id="anatomy-title">
-                Quatro camadas. <em>Um sistema só.</em>
+                <AccentTitle
+                  title={home.anatomy.title}
+                  accent={home.anatomy.titleAccent}
+                />
               </h2>
             </div>
-            <p>
-              Um evento não é uma coisa: são camadas que precisam chegar juntas.
-              Montamos cada uma pensando na próxima.
-            </p>
+            <p>{home.anatomy.intro}</p>
           </div>
           <div className="wrap" data-reveal style={stagger(1, 120)}>
-            <StageLayers />
+            <StageLayers layers={home.anatomy.layers} />
           </div>
         </section>
 
@@ -239,40 +293,47 @@ function Home() {
           <div className="wrap">
             <div className="cap-head" data-reveal>
               <div>
-                <div className="section-label">Capacidades</div>
+                <div className="section-label">{home.capabilities.label}</div>
                 <h2 className="section-title">
-                  Tudo conectado.
-                  <br />
-                  <em>Nada por acaso.</em>
+                  <AccentTitle
+                    title={home.capabilities.title}
+                    accent={home.capabilities.titleAccent}
+                    stacked
+                  />
                 </h2>
               </div>
-              <p>
-                Uma operação integrada para quando a complexidade não pode
-                aparecer. Você vê o resultado. A gente cuida do sistema.
-              </p>
+              <p>{home.capabilities.intro}</p>
             </div>
             <div className="cap-grid">
-              {capabilities.map(([index, title, copy, Icon], position) => (
-                <article
-                  className="panel cap-card"
-                  key={index}
-                  data-reveal
-                  style={stagger(position % 3)}
-                  {...spotlight}
-                  data-testid={`card-capability-${index}`}
-                >
-                  <div className="cap-top">
-                    <span className="cap-icon" aria-hidden="true">
-                      <Icon size={22} strokeWidth={1.5} />
-                    </span>
-                    <span className="cap-index" aria-hidden="true">
-                      {index}
-                    </span>
-                  </div>
-                  <h3>{title}</h3>
-                  <p>{copy}</p>
-                </article>
-              ))}
+              {home.capabilities.items.map((item, position) => {
+                const Icon = CAPABILITY_ICONS[item.icon];
+                if (!Icon) {
+                  throw new Error(
+                    `Ícone de capacidade desconhecido: "${item.icon}".`,
+                  );
+                }
+                return (
+                  <article
+                    className="panel cap-card"
+                    key={item.num}
+                    data-reveal
+                    style={stagger(position % 3)}
+                    {...spotlight}
+                    data-testid={`card-capability-${item.num}`}
+                  >
+                    <div className="cap-top">
+                      <span className="cap-icon" aria-hidden="true">
+                        <Icon size={22} strokeWidth={1.5} />
+                      </span>
+                      <span className="cap-index" aria-hidden="true">
+                        {item.num}
+                      </span>
+                    </div>
+                    <h3>{item.title}</h3>
+                    <p>{item.copy}</p>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -280,95 +341,39 @@ function Home() {
         <section className="section work" id="work" tabIndex={-1}>
           <div className="wrap">
             <div data-reveal>
-              <div className="section-label">Em campo</div>
+              <div className="section-label">{home.work.label}</div>
               <h2 className="section-title">
-                O cuidado começa <em>nos bastidores.</em>
+                <AccentTitle
+                  title={home.work.title}
+                  accent={home.work.titleAccent}
+                />
               </h2>
             </div>
             <div className="work-grid">
-              <article
-                className="work-feature"
-                data-reveal
-                data-testid="card-project-pragma-base"
-              >
-                <div className="frame frame-corners work-media">
-                  <img
-                    src={facadeImage}
-                    alt="Fachada da base PRAGMA, com a van da equipe estacionada em frente"
-                    width={1536}
-                    height={1024}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <div className="work-bottom">
-                  <p className="section-label">Base PRAGMA / Brasília, DF</p>
-                  <h3>O lugar também faz parte do show.</h3>
-                  <p>Uma casa para preparar, testar e fazer sair do papel.</p>
-                </div>
-              </article>
+              <WorkCard card={feature} featured />
               <div className="work-stack">
-                <article
-                  className="panel work-tile"
+                {tiles.map((card, index) => (
+                  <WorkCard
+                    key={card.title}
+                    card={card}
+                    delay={index + 1}
+                    spotlight={spotlight}
+                  />
+                ))}
+                <p
+                  className="work-statement"
                   data-reveal
-                  style={stagger(1, 110)}
-                  {...spotlight}
-                  data-testid="card-project-summit"
+                  style={stagger(tiles.length + 1, 110)}
                 >
-                  <div className="frame work-tile-media">
-                    <img
-                      src={stagePhoto}
-                      alt="Câmera em tripé no canto do palco de um show em tenda, com painel de LED ao fundo."
-                      width={1280}
-                      height={960}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                  <div>
-                    <h3>O palco é só uma parte.</h3>
-                    <p>
-                      Planejamento, equipe e infraestrutura conectados para
-                      cuidar de cada detalhe do encontro.
-                    </p>
-                  </div>
-                </article>
-                <article
-                  className="panel work-tile"
-                  data-reveal
-                  style={stagger(2, 110)}
-                  {...spotlight}
-                  data-testid="card-project-stream"
-                >
-                  <div className="frame work-tile-media">
-                    <img
-                      src={streamPhoto}
-                      alt="Mesa de som, notebook com software de transmissão e switcher durante a gravação de um podcast."
-                      width={1280}
-                      height={960}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                  <div>
-                    <h3>Presença não tem distância.</h3>
-                    <p>
-                      Captação, realização e streaming para levar a experiência
-                      a quem acompanha de qualquer lugar.
-                    </p>
-                  </div>
-                </article>
-                <p className="work-statement" data-reveal style={stagger(3, 110)}>
-                  O plano é importante.
+                  {home.work.statementLine1}
                   <br />
-                  <span>O momento é tudo.</span>
+                  <span>{home.work.statementLine2}</span>
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* O caminho do sinal, do palco até quem assiste de longe. */}
         <section
           className="section signal"
           id="signal"
@@ -378,18 +383,18 @@ function Home() {
           <div className="fx-grid" aria-hidden="true" />
           <div className="wrap signal-head" data-reveal>
             <div>
-              <div className="section-label">Broadcast</div>
+              <div className="section-label">{home.broadcast.label}</div>
               <h2 className="section-title" id="signal-title">
-                Do palco <em>até a tela.</em>
+                <AccentTitle
+                  title={home.broadcast.title}
+                  accent={home.broadcast.titleAccent}
+                />
               </h2>
             </div>
-            <p>
-              Quem assiste de longe não deveria sentir a distância. Entre a
-              câmera e a tela existe uma cadeia — e cada elo tem plano B.
-            </p>
+            <p>{home.broadcast.intro}</p>
           </div>
           <div className="wrap" data-reveal style={stagger(1, 120)}>
-            <SignalChain />
+            <SignalChain stations={home.broadcast.stations} />
           </div>
         </section>
 
@@ -400,65 +405,49 @@ function Home() {
           tabIndex={-1}
         >
           <div className="wrap" data-reveal>
-            <div className="section-label">Bastidores</div>
+            <div className="section-label">{home.gallery.label}</div>
             <h2 className="section-title" id="gallery-title">
-              Gente de verdade, <em>fazendo acontecer.</em>
+              <AccentTitle
+                title={home.gallery.title}
+                accent={home.gallery.titleAccent}
+              />
             </h2>
           </div>
-          <PhotoGallery />
+          <PhotoGallery photos={galleryPhotos} />
         </section>
 
-        <section className="section process" id="method" tabIndex={-1}>
-          <div className="wrap process-layout">
-            <div className="process-intro" data-reveal>
-              <div className="section-label">Método</div>
-              <h2 className="section-title">
-                Do primeiro rascunho ao <em>último aplauso.</em>
-              </h2>
-              <p>
-                Um bom evento parece simples. É porque cada camada foi pensada
-                antes.
-              </p>
-            </div>
-            <ol className="steps">
-              {method.map(([num, title, copy]) => (
-                <li
-                  className="step"
-                  key={num}
-                  data-inview
-                  data-testid={`step-method-${num}`}
-                >
-                  <span className="step-index">{num}</span>
-                  <h3>{title}</h3>
-                  <p>{copy}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
+        <MethodStory
+          method={{
+            ...home.method,
+            steps: methodSteps,
+          }}
+        />
 
         <section className="section contact" id="contact" tabIndex={-1}>
           <div className="wrap contact-layout">
             <div data-reveal>
-              <div className="eyebrow mono">Vamos produzir</div>
+              <div className="eyebrow mono">{home.contact.eyebrow}</div>
               <h2>
-                Tem uma ideia?
-                <br />
-                <span className="accent-gradient">Vamos fazer.</span>
+                {home.contact.title}
+                {home.contact.titleAccent ? (
+                  <>
+                    <br />
+                    <span className="accent-gradient">
+                      {home.contact.titleAccent}
+                    </span>
+                  </>
+                ) : null}
               </h2>
-              <p className="contact-note">
-                Conte o que está planejando. Vamos encontrar um caminho claro
-                para colocar isso em cena.
-              </p>
+              <p className="contact-note">{home.contact.note}</p>
               <a
                 className="contact-email text-link"
-                href="mailto:ola@pragma.live"
+                href={`mailto:${settings.email}`}
               >
-                ola@pragma.live <ArrowUpRight size={18} aria-hidden="true" />
+                {settings.email} <ArrowUpRight size={18} aria-hidden="true" />
               </a>
             </div>
             <div data-reveal style={stagger(1, 120)}>
-              <ContactForm />
+              <ContactForm email={settings.email} />
             </div>
           </div>
         </section>
@@ -467,11 +456,11 @@ function Home() {
         <div className="wrap footer-inner">
           <div className="footer-brand">
             <Brand />
-            <p>Fazer acontecer é o nosso método.</p>
+            <p>{settings.footerTagline}</p>
           </div>
           <nav className="footer-links" aria-label="Navegação do rodapé">
-            <a href="mailto:ola@pragma.live" data-testid="link-email">
-              ola@pragma.live <ArrowUpRight size={16} aria-hidden="true" />
+            <a href={`mailto:${settings.email}`} data-testid="link-email">
+              {settings.email} <ArrowUpRight size={16} aria-hidden="true" />
             </a>
             <a href="#top" data-testid="link-back-top">
               Voltar ao topo <ArrowUp size={16} aria-hidden="true" />
@@ -481,6 +470,74 @@ function Home() {
       </footer>
       <div className="fx-grain" aria-hidden="true" />
     </div>
+  );
+}
+
+function WorkCard({
+  card,
+  featured,
+  delay = 0,
+  spotlight,
+}: {
+  card: HomePage["work"]["cards"][number];
+  featured?: boolean;
+  delay?: number;
+  spotlight?: ReturnType<typeof useSpotlight>;
+}) {
+  const image = requireImage(card.image, card.title);
+  const photo = mappedPhoto(image, card.alt, card.title);
+  if (featured) {
+    return (
+      <article
+        className="work-feature"
+        data-reveal
+        data-testid={card.testId ?? "card-project-feature"}
+      >
+        <div className="frame frame-corners work-media">
+          <img
+            src={photo.src}
+            srcSet={photo.srcSet}
+            sizes="(max-width: 900px) 92vw, 56vw"
+            alt={photo.alt}
+            width={photo.width}
+            height={photo.height}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <div className="work-bottom">
+          {card.kicker ? <p className="section-label">{card.kicker}</p> : null}
+          <h3>{card.title}</h3>
+          <p>{card.copy}</p>
+        </div>
+      </article>
+    );
+  }
+  return (
+    <article
+      className="panel work-tile"
+      data-reveal
+      style={stagger(delay, 110)}
+      {...spotlight}
+      data-testid={card.testId ?? `card-project-${delay}`}
+    >
+      <div className="frame work-tile-media">
+        <img
+          src={photo.src}
+          srcSet={photo.srcSet}
+          sizes="(max-width: 900px) 92vw, 28vw"
+          alt={photo.alt}
+          width={photo.width}
+          height={photo.height}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <div>
+        <h3>{card.title}</h3>
+        <p>{card.copy}</p>
+      </div>
+    </article>
   );
 }
 

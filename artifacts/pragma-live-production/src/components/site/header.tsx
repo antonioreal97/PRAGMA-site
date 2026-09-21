@@ -3,14 +3,12 @@ import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Brand } from "./brand";
 import { useScrollProgress } from "./motion";
 
-const links = [
-  ["capabilities", "Capacidades"],
-  ["work", "Projetos"],
-  ["method", "Método"],
-  ["contact", "Falar com a PRAGMA"],
-] as const;
+type NavLink = {
+  id: string;
+  label: string;
+};
 
-export function Header() {
+export function Header({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("");
   const { progress, stuck } = useScrollProgress();
@@ -31,12 +29,12 @@ export function Header() {
       },
       { rootMargin: "-20% 0px -65% 0px" },
     );
-    links.forEach(([id]) => {
+    links.forEach(({ id }) => {
       const section = document.getElementById(id);
       if (section) observer.observe(section);
     });
     return () => observer.disconnect();
-  }, []);
+  }, [links]);
 
   useEffect(() => {
     if (!open) return;
@@ -108,7 +106,7 @@ export function Header() {
           className={`nav ${open ? "open" : ""}`}
           aria-label="Navegação principal"
         >
-          {links.map(([id, label]) => (
+          {links.map(({ id, label }) => (
             <a
               key={id}
               href={`#${id}`}

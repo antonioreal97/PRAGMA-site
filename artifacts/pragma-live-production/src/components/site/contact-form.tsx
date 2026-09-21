@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type Field = "name" | "email" | "project";
 
-export function ContactForm() {
+export function ContactForm({ email }: { email: string }) {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [draft, setDraft] = useState<{ body: string; url: string } | null>(
     null,
@@ -41,7 +41,7 @@ export function ContactForm() {
     const body = `Olá, PRAGMA!\n\n${project}\n\nNome: ${name}\nE-mail: ${email}`;
     setDraft({
       body,
-      url: `mailto:ola@pragma.live?subject=${encodeURIComponent("Novo projeto | " + name)}&body=${encodeURIComponent(body)}`,
+      url: `mailto:${email}?subject=${encodeURIComponent("Novo projeto | " + name)}&body=${encodeURIComponent(body)}`,
     });
   };
   const copy = async () => {
@@ -157,7 +157,7 @@ export function ContactForm() {
             </h4>
             <p>
               Abra seu e-mail para concluir o envio para{" "}
-              <strong>ola@pragma.live</strong>.
+              <strong>{email}</strong>.
             </p>
             <div className="draft-actions">
               <Button asChild>
