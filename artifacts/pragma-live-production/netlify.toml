@@ -2,6 +2,11 @@
   command = "pnpm run build"
   publish = "dist"
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "frame-ancestors 'self' https://www.sanity.io https://*.sanity.io https://*.sanity.studio http://localhost:5173 http://127.0.0.1:5173"
+
 [[redirects]]
   from = "/studio"
   to = "/studio.html"

@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_SANITY_PROJECT_ID: string;
   readonly VITE_SANITY_DATASET: string;
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

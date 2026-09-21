@@ -87,7 +87,13 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['styled-components', 'react/jsx-runtime'],
+    include: [
+      "styled-components",
+      "react/jsx-runtime",
+      "react",
+      "react-dom",
+      "@sanity/visual-editing",
+    ],
   },
   server: {
     port,

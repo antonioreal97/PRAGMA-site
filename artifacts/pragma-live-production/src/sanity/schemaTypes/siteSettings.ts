@@ -4,6 +4,9 @@ export const siteSettingsType = defineType({
   name: "siteSettings",
   title: "Configurações",
   type: "document",
+  options: {
+    canvasApp: { exclude: true },
+  },
   fields: [
     defineField({
       name: "email",

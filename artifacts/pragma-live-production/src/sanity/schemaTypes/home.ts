@@ -34,6 +34,12 @@ export const homeType = defineType({
   name: "home",
   title: "Página inicial",
   type: "document",
+  options: {
+    canvasApp: {
+      purpose:
+        "Landing PRAGMA. Singleton com _id home — ao enviar para o Studio, atualize esse documento.",
+    },
+  },
   groups: [
     { name: "hero", title: "Abertura" },
     { name: "about", title: "O que fazemos" },
@@ -197,6 +203,7 @@ export const homeType = defineType({
                       { title: "Som", value: "som" },
                       { title: "Infraestrutura", value: "infra" },
                     ],
+                    canvasApp: { exclude: true },
                   },
                   validation: (rule) => rule.required(),
                 }),
@@ -282,6 +289,7 @@ export const homeType = defineType({
                       { title: "Streaming", value: "streaming" },
                       { title: "Produção", value: "producao" },
                     ],
+                    canvasApp: { exclude: true },
                   },
                   validation: (rule) => rule.required(),
                 }),
@@ -351,6 +359,7 @@ export const homeType = defineType({
                   name: "testId",
                   title: "data-testid",
                   type: "string",
+                  options: { canvasApp: { exclude: true } },
                 }),
                 ...captionedImage,
               ],
@@ -402,6 +411,7 @@ export const homeType = defineType({
                       { title: "Encode", value: "encode" },
                       { title: "Entrega", value: "entrega" },
                     ],
+                    canvasApp: { exclude: true },
                   },
                   validation: (rule) => rule.required(),
                 }),
@@ -503,6 +513,7 @@ export const homeType = defineType({
                   name: "id",
                   title: "ID",
                   type: "string",
+                  options: { canvasApp: { exclude: true } },
                   validation: (rule) => rule.required(),
                 }),
                 defineField({

@@ -7,7 +7,7 @@ const TALL_WIDTHS = [960, 1080, 1440];
 const DEFAULT_WIDTHS = [720, 960, 1280, 1600, 1920];
 
 function builder() {
-  return createImageUrlBuilder(getSanityClient());
+  return createImageUrlBuilder(getSanityClient({ stega: false }));
 }
 
 export function hotspotFocus(image?: SanityImage | null) {

@@ -15,4 +15,9 @@ if (!projectId) {
 
 export default defineCliConfig({
   api: { projectId, dataset },
+  studioHost: "pragma-live",
+  deployment: {
+    appId: "q8bnjo6h4xsdycvoq2htk4hz",
+    autoUpdates: false,
+  },
 });

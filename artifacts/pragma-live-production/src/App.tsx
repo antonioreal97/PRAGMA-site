@@ -37,6 +37,7 @@ import {
 } from "@/sanity/image";
 import type { HomePage, SanityImage, SiteSettings } from "@/sanity/types";
 import { useHomePage } from "@/sanity/use-home-page";
+import { SanityVisualEditing } from "@/sanity/visual-editing";
 
 const queryClient = new QueryClient();
 
@@ -560,6 +561,7 @@ function App() {
           </ErrorBoundary>
         </WouterRouter>
         <Toaster />
+        <SanityVisualEditing />
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -8,7 +8,8 @@
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "seed": "node --env-file=.env ./node_modules/sanity/bin/sanity exec ./scripts/seed-sanity.ts --with-user-token"
+    "seed": "node --env-file=.env ./node_modules/sanity/bin/sanity exec ./scripts/seed-sanity.ts --with-user-token",
+    "studio:deploy": "SANITY_STUDIO_HOSTED=true node --env-file=.env ./node_modules/sanity/bin/sanity deploy --url pragma-live --yes"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -45,6 +46,7 @@
     "@sanity/client": "^8.6.2",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^6.15.0",
+    "@sanity/visual-editing": "^6.1.2",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "catalog:",
@@ -62,9 +64,9 @@
     "input-otp": "^1.4.2",
     "lucide-react": "catalog:",
     "next-themes": "^0.4.6",
-    "react": "catalog:",
+    "react": "^19.3.0",
     "react-day-picker": "^9.11.1",
-    "react-dom": "catalog:",
+    "react-dom": "^19.3.0",
     "react-hook-form": "^7.55.0",
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",
