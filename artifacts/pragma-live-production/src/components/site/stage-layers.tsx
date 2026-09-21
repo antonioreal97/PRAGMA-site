@@ -1,0 +1,148 @@
+import { useCallback, useRef, type CSSProperties, type PointerEvent } from "react";
+import { motionAllowed } from "./motion";
+
+/**
+ * Vista explodida de um palco, em CSS 3D.
+ *
+ * Cada camada que a PRAGMA opera vira um plano real no espaço, afastado no
+ * eixo Z. A geometria é decorativa e fica escondida de leitores de tela; os
+ * nomes das camadas são uma lista de verdade, porque são conteúdo.
+ */
+
+const LED_COLS = 8;
+const LED_ROWS = 4;
+// Painéis que ficam acesos: desenha uma forma, em vez de ruído aleatório
+// que mudaria a cada render.
+const LIT = new Set([2, 3, 4, 5, 10, 11, 12, 13, 18, 19, 20, 21, 27, 28]);
+
+type Layer = {
+  id: string;
+  name: string;
+  note: string;
+  z: number;
+  /* Onde a etiqueta pousa, para as quatro não se empilharem. */
+  tag: [string, string];
+};
+
+const layers: Layer[] = [
+  { id: "imagem", name: "Imagem", note: "LED e captação", z: -210, tag: ["78%", "20%"] },
+  { id: "luz", name: "Luz", note: "Truss e desenho", z: -70, tag: ["22%", "78%"] },
+  { id: "som", name: "Som", note: "Line array", z: 70, tag: ["13%", "34%"] },
+  { id: "infra", name: "Infraestrutura", note: "Energia e cabo", z: 210, tag: ["58%", "4%"] },
+];
+
+export function StageLayers() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // A cena acompanha o ponteiro de leve. Amplitude pequena de propósito:
+  // é profundidade, não um brinquedo.
+  const track = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse" || !motionAllowed()) return;
+    const node = ref.current;
+    if (!node) return;
+    const box = node.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    node.style.setProperty("--yaw", `${-26 + x * 16}deg`);
+    node.style.setProperty("--pitch", `${6 - y * 10}deg`);
+  }, []);
+
+  const reset = useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    node.style.removeProperty("--yaw");
+    node.style.removeProperty("--pitch");
+  }, []);
+
+  return (
+    <div
+      className="stage3d"
+      ref={ref}
+      onPointerMove={track}
+      onPointerLeave={reset}
+    >
+      <ul className="stage3d-scene">
+        {layers.map((layer) => (
+          <li
+            className="stage-layer"
+            key={layer.id}
+            data-layer={layer.id}
+            style={
+              {
+                "--z": `${layer.z}px`,
+                "--tag-l": layer.tag[0],
+                "--tag-b": layer.tag[1],
+              } as CSSProperties
+            }
+          >
+            <div className="stage-art" aria-hidden="true">
+              {layer.id === "imagem" && (
+                <div className="led-wall">
+                  {Array.from({ length: LED_COLS * LED_ROWS }, (_, i) => (
+                    <span
+                      key={i}
+                      className="led-panel"
+                      data-lit={LIT.has(i) || undefined}
+                      style={{ "--i": i } as CSSProperties}
+                    />
+                  ))}
+                </div>
+              )}
+              {layer.id === "luz" && (
+                <div className="truss">
+                  <div className="truss-beam">
+                    <span className="truss-braces" />
+                  </div>
+                  {[18, 50, 82].map((left, i) => (
+                    <div
+                      className="fixture"
+                      key={left}
+                      style={
+                        { "--left": `${left}%`, "--i": i } as CSSProperties
+                      }
+                    >
+                      <span className="fixture-head" />
+                      <span className="fixture-beam" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {layer.id === "som" && (
+                <div className="arrays">
+                  {["left", "right"].map((side) => (
+                    <div className={`array array-${side}`} key={side}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <span key={i} className="array-box" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {layer.id === "infra" && (
+                <div className="deck">
+                  <span className="deck-plane" />
+                  <span className="deck-run" />
+                </div>
+              )}
+            </div>
+            <span className="layer-tag">
+              <b>{layer.name}</b>
+              {layer.note}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {/* Numa tela estreita as etiquetas flutuantes não cabem sem serem
+          cortadas. A mesma informação vira legenda abaixo da cena; só uma
+          das duas existe por vez, então nada é lido em dobro. */}
+      <ul className="stage-legend">
+        {layers.map((layer) => (
+          <li key={layer.id}>
+            <b>{layer.name}</b>
+            {layer.note}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

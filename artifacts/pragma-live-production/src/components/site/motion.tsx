@@ -50,17 +50,43 @@ export function useSiteMotion() {
 }
 
 /**
- * Brilho que segue o ponteiro dentro de um painel. Escreve duas variáveis
- * CSS; quem decide se algo aparece é a folha de estilo, só em ponteiro fino.
+ * Se o movimento está autorizado agora. É a mesma classe que o CSS usa,
+ * então JavaScript e folha de estilo nunca discordam sobre o assunto.
+ */
+export const motionAllowed = () =>
+  document.documentElement.classList.contains("motion-ok");
+
+/** Inclinação máxima do painel sob o ponteiro, em graus. */
+const TILT = 4.5;
+
+/**
+ * Brilho e inclinação que seguem o ponteiro dentro de um painel. Escreve
+ * quatro variáveis CSS; quem decide se algo aparece é a folha de estilo,
+ * só em ponteiro fino. O painel volta ao plano quando o ponteiro sai.
  */
 export function useSpotlight() {
-  return useCallback((event: PointerEvent<HTMLElement>) => {
+  const move = useCallback((event: PointerEvent<HTMLElement>) => {
     if (event.pointerType !== "mouse") return;
     const target = event.currentTarget;
     const box = target.getBoundingClientRect();
-    target.style.setProperty("--mx", `${event.clientX - box.left}px`);
-    target.style.setProperty("--my", `${event.clientY - box.top}px`);
+    const x = event.clientX - box.left;
+    const y = event.clientY - box.top;
+    target.style.setProperty("--mx", `${x}px`);
+    target.style.setProperty("--my", `${y}px`);
+    if (!motionAllowed()) return;
+    // Do centro para a borda, de -1 a 1. O eixo Y inverte: o ponteiro em
+    // cima deve inclinar o topo do painel para trás.
+    target.style.setProperty("--tilt-y", `${(x / box.width - 0.5) * 2 * TILT}deg`);
+    target.style.setProperty("--tilt-x", `${(0.5 - y / box.height) * 2 * TILT}deg`);
   }, []);
+
+  const leave = useCallback((event: PointerEvent<HTMLElement>) => {
+    const target = event.currentTarget;
+    target.style.removeProperty("--tilt-x");
+    target.style.removeProperty("--tilt-y");
+  }, []);
+
+  return { onPointerMove: move, onPointerLeave: leave };
 }
 
 /** Quanto da página já foi lida, de 0 a 1, atualizado por quadro. */

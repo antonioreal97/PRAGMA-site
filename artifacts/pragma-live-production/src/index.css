@@ -1557,8 +1557,15 @@ html:not(.motion-ok) .step .step-index {
   .panel:hover::after {
     opacity: 1;
   }
-  .cap-card:hover {
-    transform: translateY(-4px);
+  /* A variante com html.motion-ok existe para empatar em especificidade com
+     `html.motion-ok [data-reveal].is-in { transform: none }` — os cards são
+     alvos de revelação, e sem isso aquela regra vence e mata a inclinação. */
+  .cap-card:hover,
+  .work-tile:hover,
+  html.motion-ok .cap-card:hover,
+  html.motion-ok .work-tile:hover {
+    transform: perspective(1000px) rotateX(var(--tilt-x, 0deg))
+      rotateY(var(--tilt-y, 0deg)) translateY(-4px);
   }
   .cap-card:hover .cap-icon {
     border-color: rgb(33 224 93 / 0.5);
@@ -1578,11 +1585,312 @@ html:not(.motion-ok) .step .step-index {
   .frame-corners:hover::before {
     opacity: 1;
   }
-  .work-tile:hover {
-    transform: translateY(-3px);
-  }
   .brand:hover {
     opacity: 0.8;
+  }
+}
+
+/* ============================================================
+   Cena 3D: palco em camadas.
+   Transformações CSS puras — sem WebGL, sem dependência nova.
+   O que o navegador compõe aqui são planos, não malhas: por isso
+   cada camada é achatada e a profundidade vem do eixo Z.
+   ============================================================ */
+.stage3d {
+  --yaw: -26deg;
+  --pitch: 6deg;
+  position: relative;
+  min-height: clamp(340px, 42vw, 520px);
+  perspective: 1500px;
+  perspective-origin: 52% 46%;
+  transition: none;
+}
+.stage3d-scene {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--pitch)) rotateY(var(--yaw));
+  transition: transform 420ms var(--ease-out);
+}
+/* Enquanto o ponteiro conduz a cena, a transição atrapalharia. */
+.stage3d:hover .stage3d-scene {
+  transition: none;
+}
+.stage-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--z) * var(--z-scale, 1)));
+  transition: opacity var(--duration) var(--ease);
+}
+.stage-art {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+/* Etiqueta contra-rotacionada, para o texto continuar de frente. */
+.layer-tag {
+  position: absolute;
+  left: var(--tag-l, 50%);
+  bottom: var(--tag-b, 4%);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgb(6 9 7 / 0.82);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  font-family: var(--font-brand-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+  transform: translateX(-50%) rotateY(calc(var(--yaw) * -1))
+    rotateX(calc(var(--pitch) * -1));
+  transition:
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
+}
+.layer-tag b {
+  font-weight: 400;
+  color: var(--paper);
+}
+.stage-layer:hover .layer-tag {
+  border-color: rgb(33 224 93 / 0.5);
+  color: var(--acid);
+  box-shadow: 0 0 24px -6px rgb(33 224 93 / 0.7);
+}
+
+.stage-legend {
+  display: none;
+}
+
+/* ---- Camada: imagem (parede de LED) ---- */
+.led-wall {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: min(72%, 560px);
+  aspect-ratio: 16 / 8;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 3px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: #050806;
+  box-shadow:
+    0 0 0 1px rgb(6 9 7 / 0.9),
+    0 40px 80px -30px rgb(0 0 0 / 0.9);
+}
+.led-panel {
+  border-radius: 1px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(255 255 255 / 0.05) 0 1px,
+      transparent 1px 3px
+    ),
+    #0c110e;
+}
+/* Os painéis acesos desenham uma forma no muro, como conteúdo no ar. */
+.led-panel[data-lit] {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgb(0 0 0 / 0.22) 0 1px,
+      transparent 1px 3px
+    ),
+    linear-gradient(150deg, var(--mint), var(--acid) 55%, var(--acid-deep));
+  box-shadow: 0 0 14px rgb(33 224 93 / 0.45);
+}
+html.motion-ok .led-panel[data-lit] {
+  animation: led-breathe 4.2s var(--ease) infinite;
+  animation-delay: calc(var(--i) * 90ms);
+}
+@keyframes led-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.62;
+  }
+}
+
+/* ---- Camada: luz (truss e feixes) ---- */
+.truss {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: min(84%, 640px);
+  transform: translateX(-50%);
+  transform-style: preserve-3d;
+}
+.truss-beam {
+  position: relative;
+  height: 26px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    rgb(237 240 232 / 0.16),
+    rgb(237 240 232 / 0.03) 45%,
+    rgb(0 0 0 / 0.35)
+  );
+}
+/* As diagonais do truss: um padrão repetido custa menos que 40 elementos. */
+.truss-braces {
+  position: absolute;
+  inset: 3px 6px;
+  background-image:
+    repeating-linear-gradient(
+      58deg,
+      var(--line-strong) 0 1px,
+      transparent 1px 22px
+    ),
+    repeating-linear-gradient(
+      -58deg,
+      var(--line-strong) 0 1px,
+      transparent 1px 22px
+    );
+  opacity: 0.65;
+}
+.fixture {
+  position: absolute;
+  top: 26px;
+  left: var(--left);
+  transform: translateX(-50%);
+  transform-style: preserve-3d;
+}
+.fixture-head {
+  display: block;
+  width: 15px;
+  height: 19px;
+  margin-inline: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px 2px 4px 4px;
+  background: linear-gradient(180deg, #232e27, #0d120f);
+}
+/* Feixe volumétrico: um trapézio com gradiente, cortado por clip-path. */
+.fixture-beam {
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  width: clamp(120px, 20vw, 210px);
+  height: clamp(190px, 30vw, 330px);
+  transform: translateX(-50%);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    180deg,
+    rgb(95 245 176 / 0.4),
+    rgb(33 224 93 / 0.12) 45%,
+    transparent 88%
+  );
+  filter: blur(1px);
+  pointer-events: none;
+}
+html.motion-ok .fixture-beam {
+  animation: beam-breathe 5.5s var(--ease) infinite;
+  animation-delay: calc(var(--i) * 700ms);
+}
+@keyframes beam-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---- Camada: som (line arrays) ---- */
+.arrays {
+  position: absolute;
+  inset: 0;
+}
+.array {
+  position: absolute;
+  top: 26%;
+  display: grid;
+  gap: 3px;
+  width: 52px;
+}
+.array-left {
+  left: 4%;
+  transform: rotateY(16deg);
+}
+.array-right {
+  right: 4%;
+  transform: rotateY(-16deg);
+}
+.array-box {
+  height: 17px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: linear-gradient(
+    100deg,
+    rgb(237 240 232 / 0.14),
+    rgb(0 0 0 / 0.4)
+  );
+}
+.array-box:nth-child(odd) {
+  transform: translateX(2px);
+}
+
+/* ---- Camada: infraestrutura (piso e cabeamento) ---- */
+.deck {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+/* Um plano deitado: é o rotateX que cria o chão de verdade. */
+.deck-plane {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  width: min(104%, 780px);
+  height: clamp(260px, 38vw, 420px);
+  transform: translateX(-50%) rotateX(72deg);
+  transform-origin: 50% 100%;
+  background-image:
+    linear-gradient(to right, rgb(33 224 93 / 0.32) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(33 224 93 / 0.32) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(78% 88% at 50% 100%, #000 4%, transparent 82%);
+}
+.deck-run {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: min(70%, 520px);
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(33 224 93 / 0.7),
+    transparent
+  );
+  box-shadow: 0 0 16px rgb(33 224 93 / 0.5);
+}
+
+/* Passar o ponteiro numa camada apaga as outras: a leitura fica na escolhida. */
+@media (hover: hover) and (pointer: fine) {
+  .stage3d-scene:hover .stage-layer {
+    opacity: 0.32;
+  }
+  .stage3d-scene:hover .stage-layer:hover {
+    opacity: 1;
   }
 }
 
@@ -1831,5 +2139,392 @@ html:not(.motion-ok) .step .step-index {
     background: none;
     -webkit-text-fill-color: var(--acid);
     color: var(--acid);
+  }
+}
+
+/* Seção da vista explodida. */
+.anatomy {
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+.anatomy-head {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: end;
+  gap: 40px;
+  margin-bottom: 8px;
+}
+.anatomy-head > p {
+  max-width: 460px;
+  color: var(--paper-dim);
+}
+@media (max-width: 1100px) {
+  .anatomy-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 24px;
+  }
+}
+
+/* ============================================================
+   Cena 3D: cadeia de sinal.
+   Quatro estações numa fileira que recua na perspectiva. O trilho
+   entre elas carrega um pulso, que é o próprio sinal viajando.
+   ============================================================ */
+.chain3d {
+  --yaw: -23deg;
+  --pitch: 9deg;
+  position: relative;
+  min-height: clamp(330px, 34vw, 430px);
+  perspective: 2200px;
+  perspective-origin: 50% 44%;
+}
+.chain3d-scene {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--pitch)) rotateY(var(--yaw));
+  transition: transform 420ms var(--ease-out);
+}
+.chain3d:hover .chain3d-scene {
+  transition: none;
+}
+/* O chão que ancora a fileira: sem ele as estações flutuam. */
+.chain-floor {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: min(120%, 900px);
+  height: min(90%, 620px);
+  transform: translate(-50%, -50%) rotateX(66deg);
+  background-image:
+    linear-gradient(to right, rgb(33 224 93 / 0.26) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(33 224 93 / 0.26) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(46% 52% at 50% 46%, #000 5%, transparent 76%);
+}
+.chain-rail {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(78px, 11vw, 128px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+}
+.chain-node {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.node-stack {
+  position: relative;
+  display: block;
+  transform-style: preserve-3d;
+}
+/* A face da estação, em pé sobre o chão. */
+.node-face {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(78px, 9.5vw, 104px);
+  height: clamp(78px, 9.5vw, 104px);
+  border: 1px solid rgb(33 224 93 / 0.28);
+  border-radius: 16px;
+  background:
+    linear-gradient(162deg, rgb(237 240 232 / 0.1), rgb(237 240 232 / 0.02)),
+    linear-gradient(180deg, #1b241e, #0c110e);
+  color: var(--acid);
+  box-shadow:
+    inset 0 1px 0 rgb(237 240 232 / 0.16),
+    0 26px 46px -24px rgb(0 0 0 / 0.95);
+  transition:
+    border-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+/* Espessura: uma segunda face deslocada no Z faz o volume aparecer. */
+.node-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  transform: translateZ(-16px);
+  background: linear-gradient(180deg, #0f1512, #070a08);
+  border: 1px solid var(--line);
+}
+/* Poça de luz no chão, sob a estação. */
+.node-pool {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 150%;
+  height: 90px;
+  transform: translateX(-50%) rotateX(90deg);
+  transform-origin: 50% 0;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgb(33 224 93 / 0.3),
+    transparent 70%
+  );
+}
+/* Trilho ligando uma estação à anterior. */
+.chain-link {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: clamp(78px, 11vw, 128px);
+  height: 2px;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgb(33 224 93 / 0.12),
+    rgb(33 224 93 / 0.5)
+  );
+}
+.chain-link i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--mint), transparent);
+  box-shadow: 0 0 12px rgb(95 245 176 / 0.9);
+  opacity: 0;
+}
+html.motion-ok .chain-link i {
+  opacity: 1;
+  animation: signal-travel 2.6s linear infinite;
+  animation-delay: calc(var(--i) * 420ms);
+}
+@keyframes signal-travel {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+.node-tag {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 18px);
+  display: grid;
+  gap: 2px;
+  white-space: nowrap;
+  text-align: center;
+  font-family: var(--font-brand-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+  transform: translateX(-50%) rotateY(calc(var(--yaw) * -1))
+    rotateX(calc(var(--pitch) * -1));
+  transition: color var(--duration) var(--ease);
+}
+.node-tag b {
+  font-family: var(--font-brand-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--paper);
+}
+@media (hover: hover) and (pointer: fine) {
+  .chain-node:hover .node-face {
+    border-color: rgb(33 224 93 / 0.6);
+    box-shadow:
+      inset 0 1px 0 rgb(237 240 232 / 0.22),
+      0 0 34px -6px rgb(33 224 93 / 0.85),
+      0 26px 46px -24px rgb(0 0 0 / 0.95);
+    transform: translateY(-5px);
+  }
+  .chain-node:hover .node-tag b {
+    color: var(--acid);
+  }
+}
+@media (max-width: 700px) {
+  /* Numa tela estreita a fileira não cabe: vira uma coluna, ainda em 3D.
+     A cena entra no fluxo com altura própria, senão a coluna transborda
+     a caixa e sobe por cima do texto da seção. */
+  .chain3d {
+    --yaw: -14deg;
+    --pitch: 7deg;
+    min-height: 0;
+  }
+  .chain3d-scene {
+    position: relative;
+    inset: auto;
+    height: 470px;
+  }
+  .chain-floor {
+    display: none;
+  }
+  .chain-rail {
+    top: 14px;
+    left: 26%;
+    flex-direction: column;
+    align-items: center;
+    gap: 52px;
+    transform: none;
+  }
+  .node-face {
+    width: 66px;
+    height: 66px;
+    border-radius: 14px;
+  }
+  .node-edge {
+    border-radius: 14px;
+  }
+  .chain-link {
+    top: auto;
+    right: auto;
+    bottom: 100%;
+    left: 50%;
+    width: 2px;
+    height: 52px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      180deg,
+      rgb(33 224 93 / 0.12),
+      rgb(33 224 93 / 0.5)
+    );
+  }
+  .chain-link i {
+    width: 100%;
+    height: 34%;
+    background: linear-gradient(180deg, transparent, var(--mint), transparent);
+  }
+  html.motion-ok .chain-link i {
+    animation-name: signal-travel-y;
+  }
+  @keyframes signal-travel-y {
+    from {
+      transform: translateY(-120%);
+    }
+    to {
+      transform: translateY(400%);
+    }
+  }
+  /* A legenda ganha largura própria e quebra linha, em vez de ser cortada. */
+  .node-tag {
+    top: 50%;
+    left: calc(100% + 16px);
+    width: max-content;
+    max-width: 44vw;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.4;
+    transform: translateY(-50%) rotateY(calc(var(--yaw) * -1))
+      rotateX(calc(var(--pitch) * -1));
+  }
+}
+
+/* Seção da cadeia de sinal. */
+.signal {
+  position: relative;
+  background: var(--ink-soft);
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+.signal .fx-grid {
+  mask-image: radial-gradient(70% 60% at 50% 45%, #000, transparent 80%);
+}
+.signal-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: end;
+  gap: 40px;
+  margin-bottom: 16px;
+}
+.signal-head > p {
+  max-width: 460px;
+  color: var(--paper-dim);
+}
+@media (max-width: 1100px) {
+  .signal-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Cena do palco no celular: menos profundidade, menos giro e a legenda
+     no lugar das etiquetas flutuantes, que seriam cortadas pelas bordas. */
+  .stage3d {
+    --yaw: -15deg;
+    --pitch: 4deg;
+    --z-scale: 0.46;
+    min-height: 0;
+    margin-bottom: 8px;
+  }
+  /* A cena entra no fluxo para a legenda poder vir depois dela, em vez de
+     dividir a mesma caixa e ficar por baixo. */
+  .stage3d-scene {
+    position: relative;
+    inset: auto;
+    height: 270px;
+  }
+  .layer-tag {
+    display: none;
+  }
+  .stage-legend {
+    display: grid;
+    gap: 2px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .stage-legend li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-brand-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--paper-dim);
+  }
+  .stage-legend b {
+    min-width: 108px;
+    font-family: var(--font-brand-sans);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--acid);
+  }
+  .array-left {
+    left: 9%;
+  }
+  .array-right {
+    right: 9%;
+  }
+  .array {
+    width: 34px;
+  }
+  .array-box {
+    height: 11px;
+  }
+  .truss-beam {
+    height: 18px;
+  }
+  .fixture-head {
+    width: 11px;
+    height: 14px;
+  }
+  .fixture {
+    top: 18px;
+  }
+  .fixture-beam {
+    top: 14px;
   }
 }

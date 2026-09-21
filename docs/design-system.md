@@ -43,6 +43,23 @@ O contrato é: **o conteúdo nasce visível**. A classe `motion-ok` no `<html>`,
 - A abertura tem um feixe lento (15s), o ponto de "live" pulsando e as linhas do título subindo atrás de uma máscara. Todos desligam com movimento reduzido.
 - A altura do cabeçalho nunca muda no scroll — só o material.
 
+## Cenas 3D
+
+Duas ilustrações em **CSS 3D puro** — `perspective` no contêiner, `transform-style: preserve-3d` nos grupos e `translateZ` para afastar planos. Sem WebGL e sem dependência nova: a alternativa com Three.js custaria mais de 150kB comprimidos, contra ~2,2kB de CSS e ~1,8kB de JavaScript destas duas juntas.
+
+- **`StageLayers`** (`#anatomy`): vista explodida de um palco. Quatro camadas — Imagem (parede de LED), Luz (truss, refletores e feixes), Som (line arrays) e Infraestrutura (piso e cabeamento) — separadas no eixo Z. Passar o ponteiro numa camada apaga as outras.
+- **`SignalChain`** (`#signal`): a cadeia de broadcast em perspectiva. Captação → Corte → Encode → Entrega, com um pulso que percorre os trilhos.
+
+Regras que valem para as duas:
+
+- **Profundidade é escalável.** `--z-scale` comprime o afastamento das camadas; no celular vale 0,46, senão a cena estoura a largura.
+- **Texto nunca vive deitado.** As etiquetas são contra-rotacionadas por `rotateY(calc(var(--yaw) * -1))`, e no celular somem em favor de uma legenda abaixo da cena — as flutuantes seriam cortadas pelas bordas. Só uma das duas listas existe por vez, então nada é lido em dobro.
+- **Geometria é decoração, nome é conteúdo.** As peças (painéis, refletores, caixas) são `aria-hidden`; os nomes das camadas e das estações são listas de verdade.
+- **A cena entra no fluxo em telas estreitas.** `position: absolute; inset: 0` na cena funciona no desktop, mas no celular ela precisa de `position: relative` e altura própria, senão divide a caixa com a legenda e fica por baixo.
+- **Paralaxe e inclinação respeitam o contrato de movimento.** O ponteiro só conduz a cena quando `motionAllowed()` é verdadeiro. Com movimento reduzido a arte 3D continua inteira: saem as animações e a paralaxe, não o desenho.
+
+Os painéis de `.panel` também inclinam sob o ponteiro (`--tilt-x` / `--tilt-y`, máximo 4,5°). A regra de hover precisa do prefixo `html.motion-ok` para empatar em especificidade com `html.motion-ok [data-reveal].is-in { transform: none }` — os cards são alvos de revelação, e sem isso aquela regra vence e mata a inclinação.
+
 ## Componentes existentes
 
 - `Button`: primary, secondary, outline, ghost, link e destructive. Área padrão de 44px, grande de 52px; foco global de 2px com offset. O primary tem preenchimento em gradiente, reflexo interno e um brilho que atravessa no hover. Disabled reduz opacidade e bloqueia interação; loading deve usar `aria-busy` e texto da ação.

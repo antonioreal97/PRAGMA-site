@@ -20,6 +20,8 @@ import { Header } from "@/components/site/header";
 import { HeroMedia } from "@/components/site/hero-media";
 import { ContactForm } from "@/components/site/contact-form";
 import { useSiteMotion, useSpotlight } from "@/components/site/motion";
+import { StageLayers } from "@/components/site/stage-layers";
+import { SignalChain } from "@/components/site/signal-chain";
 import NotFound from "@/pages/not-found";
 import { Route, Switch, Router as WouterRouter } from "wouter";
 import { PhotoGallery } from "@/components/site/photo-gallery";
@@ -204,6 +206,30 @@ function Home() {
           </div>
         </section>
 
+        {/* Vista explodida: as camadas que viram um evento, em 3D. */}
+        <section
+          className="section anatomy"
+          id="anatomy"
+          aria-labelledby="anatomy-title"
+          tabIndex={-1}
+        >
+          <div className="wrap anatomy-head" data-reveal>
+            <div>
+              <div className="section-label">Anatomia</div>
+              <h2 className="section-title" id="anatomy-title">
+                Quatro camadas. <em>Um sistema só.</em>
+              </h2>
+            </div>
+            <p>
+              Um evento não é uma coisa: são camadas que precisam chegar juntas.
+              Montamos cada uma pensando na próxima.
+            </p>
+          </div>
+          <div className="wrap" data-reveal style={stagger(1, 120)}>
+            <StageLayers />
+          </div>
+        </section>
+
         <section
           className="section capabilities"
           id="capabilities"
@@ -232,7 +258,7 @@ function Home() {
                   key={index}
                   data-reveal
                   style={stagger(position % 3)}
-                  onPointerMove={spotlight}
+                  {...spotlight}
                   data-testid={`card-capability-${index}`}
                 >
                   <div className="cap-top">
@@ -286,7 +312,7 @@ function Home() {
                   className="panel work-tile"
                   data-reveal
                   style={stagger(1, 110)}
-                  onPointerMove={spotlight}
+                  {...spotlight}
                   data-testid="card-project-summit"
                 >
                   <div className="frame work-tile-media">
@@ -311,7 +337,7 @@ function Home() {
                   className="panel work-tile"
                   data-reveal
                   style={stagger(2, 110)}
-                  onPointerMove={spotlight}
+                  {...spotlight}
                   data-testid="card-project-stream"
                 >
                   <div className="frame work-tile-media">
@@ -339,6 +365,31 @@ function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* O caminho do sinal, do palco até quem assiste de longe. */}
+        <section
+          className="section signal"
+          id="signal"
+          aria-labelledby="signal-title"
+          tabIndex={-1}
+        >
+          <div className="fx-grid" aria-hidden="true" />
+          <div className="wrap signal-head" data-reveal>
+            <div>
+              <div className="section-label">Broadcast</div>
+              <h2 className="section-title" id="signal-title">
+                Do palco <em>até a tela.</em>
+              </h2>
+            </div>
+            <p>
+              Quem assiste de longe não deveria sentir a distância. Entre a
+              câmera e a tela existe uma cadeia — e cada elo tem plano B.
+            </p>
+          </div>
+          <div className="wrap" data-reveal style={stagger(1, 120)}>
+            <SignalChain />
           </div>
         </section>
 

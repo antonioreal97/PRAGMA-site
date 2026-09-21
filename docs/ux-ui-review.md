@@ -81,3 +81,38 @@ A passagem anterior fixou variância visual 5/10, movimento 2/10 e densidade 3/1
 - Não há medição de Core Web Vitals em produção; os números acima são tamanho de bundle, não desempenho percebido.
 - O vídeo da abertura continua com 4,8MB e é o maior custo da página. Trocá-lo por um arquivo mais curto e comprimido é a próxima melhoria de desempenho, e não foi feita aqui.
 - O envio do contato continua dependendo do aplicativo de e-mail do visitante; nada mudou nesse fluxo.
+
+---
+
+## Terceira passagem: cenas 3D (2026-09-20)
+
+Pedido: designs 3D modernos ligados a broadcasting, vídeo e eventos ao vivo.
+
+### Decisão de técnica
+
+CSS 3D em vez de WebGL. Three.js resolveria com malhas e luzes de verdade, mas custa mais de 150kB comprimidos numa página que já carrega 4,8MB de vídeo. As duas cenas em CSS somaram 2,15kB de CSS e 1,82kB de JavaScript comprimidos — e continuam sendo DOM, então herdam tokens, foco e o contrato de movimento sem ponte nenhuma. Se a escolha for por 3D com malhas, texturas e reflexo de verdade, aí sim vale trazer WebGL; não foi o caso para dois diagramas.
+
+### O que entrou
+
+1. **`#anatomy` — palco em vista explodida.** Quatro camadas em Z: parede de LED com painéis acesos, truss com refletores e feixes volumétricos, line arrays e piso em grade. Passar o ponteiro numa camada apaga as outras.
+2. **`#signal` — cadeia de broadcast.** Quatro estações em perspectiva com pulso viajando pelos trilhos.
+3. **Inclinação nos painéis.** Os cards de capacidades e os tiles de projetos inclinam até 4,5° seguindo o ponteiro.
+
+### Bugs encontrados e corrigidos
+
+- **A inclinação era calculada mas não aplicada.** `html.motion-ok [data-reveal].is-in { transform: none }` tem especificidade (0,3,1) e vencia `.cap-card:hover` (0,2,0). As variáveis chegavam ao elemento e o `transform` computado continuava `none`. Corrigido com uma variante `html.motion-ok .cap-card:hover`, que empata e vence pela ordem.
+- **As cenas estouravam a largura no celular.** Etiquetas cortadas nas duas bordas na cena do palco; na cadeia, a coluna transbordava a caixa e subia por cima do texto da seção. Corrigido com `--z-scale`, legenda no lugar das etiquetas e a cena entrando no fluxo com altura própria.
+- **O piso das cenas sumia.** Um plano a 90° com a câmera quase no nível fica de perfil. Ajustado para 66–72°.
+
+### Verificação
+
+- TypeScript e build de produção: aprovados. CSS 22,52kB gzip; JavaScript 114,41kB gzip.
+- Carregamento limpo em aba nova: zero erros no console. Durante o desenvolvimento apareceu um erro de ordem de hooks — artefato de hot-reload ao mudar a contagem de hooks de `useSpotlight` com `Home` montado. Não ocorre em carga nova nem em produção, onde não há hot-update.
+- 375px e desktop verificados nas duas cenas; nenhum elemento fora da tela na cadeia, e o transbordo do piso do palco é sangria intencional, recortada pela seção.
+- Movimento reduzido simulado: animação do LED em `none`, pulso do sinal em `opacity: 0`, nenhuma variável de paralaxe escrita. A arte 3D permanece; só o movimento sai.
+
+### Limites
+
+- As cenas são planos em perspectiva, não sólidos: não há oclusão real entre camadas, sombra projetada nem reflexo. Em ângulos extremos de paralaxe a ilusão enfraquece — por isso a amplitude é pequena (±6 a 8°).
+- Não foram medidas em dispositivo físico de baixa potência. O custo é de composição de camadas, não de rasterização pesada, mas isso é inferência, não medição.
+- O vídeo de 4,8MB da abertura continua sendo o maior custo da página, e não foi tocado aqui.
