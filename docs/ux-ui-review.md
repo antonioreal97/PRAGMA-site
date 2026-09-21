@@ -116,3 +116,25 @@ CSS 3D em vez de WebGL. Three.js resolveria com malhas e luzes de verdade, mas c
 - As cenas são planos em perspectiva, não sólidos: não há oclusão real entre camadas, sombra projetada nem reflexo. Em ângulos extremos de paralaxe a ilusão enfraquece — por isso a amplitude é pequena (±6 a 8°).
 - Não foram medidas em dispositivo físico de baixa potência. O custo é de composição de camadas, não de rasterização pesada, mas isso é inferência, não medição.
 - O vídeo de 4,8MB da abertura continua sendo o maior custo da página, e não foi tocado aqui.
+
+---
+
+## Correção: seleção das camadas 3D (2026-09-20)
+
+**Relato:** no site publicado, só "Infraestrutura" reagia; as outras três etiquetas da vista explodida não podiam ser escolhidas.
+
+**Causa:** hit-test. Cada camada da cena é uma caixa transparente do tamanho da cena inteira, afastada no eixo Z — e dentro dela `.deck` e `.arrays` também eram caixas `inset: 0`. Transparente ainda captura o ponteiro. A camada de infraestrutura é a da frente (Z = +210px), então a caixa `.deck` dela recebia todo hover e clique da cena. Medido com `elementFromPoint` no centro de cada etiqueta: as quatro acertavam `div.deck`. Na cadeia de sinal o defeito era o mesmo: três das quatro estações bloqueadas pela caixa do trilho, e todas as legendas pelo piso.
+
+**Correção:**
+
+1. `pointer-events: none` na raiz das duas cenas (é herdado) e `auto` só na geometria visível e nas etiquetas. A linha de cabo, com 2px, ganhou uma área de alvo de 26px por pseudo-elemento.
+2. As etiquetas viraram `<button aria-pressed>`. Antes eram `<span>` que só respondiam a hover: pareciam opções, mas não havia como escolher com clique, toque ou teclado. Agora clique fixa a camada, o mesmo botão ou Escape desfazem, e hover pré-visualiza por cima da seleção. Um ponto indicador em cada etiqueta sinaliza que é uma opção. No celular a legenda virou uma lista de botões de 46px com o mesmo comportamento.
+
+**Verificação:**
+
+- `elementFromPoint` no centro de cada etiqueta e de cada peça: 8 de 8 no palco e 8 de 8 na cadeia acertam o próprio alvo (antes: 1 de 8 e 1 de 8).
+- Mouse real no desktop: hover em Luz isola Luz; clique em Som fixa e persiste com o ponteiro fora; clique em Imagem troca; segundo clique desmarca. Hover real nas estações Corte, Encode (pela legenda) e Entrega.
+- Teclado: Tab chega às etiquetas na ordem do DOM com anel de foco visível; Escape limpa a seleção. Enter e Espaço não puderam ser exercitados pela ferramenta de teste — ela injeta `keydown` sem disparar a ativação nativa de botões, e falha igual no botão da galeria, que não foi alterado. São `<button type="button">` nativos, sem `preventDefault` em nenhum `keydown` do caminho.
+- Celular (375px): a ferramenta erra o mapeamento de cliques sob emulação de dispositivo (rolou para centralizar o botão e clicou nas coordenadas antigas). Verificado separadamente: nenhum elemento cobre os botões da legenda, e o clique em cada um fixa, troca e desmarca a camada.
+- Legenda do celular fora da árvore de acessibilidade no desktop (`display: none`), então as opções não são lidas em dobro.
+- Typecheck e build aprovados; console limpo em carga nova. CSS 22,73kB gzip; JavaScript 114,57kB gzip.

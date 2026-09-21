@@ -47,11 +47,12 @@ O contrato é: **o conteúdo nasce visível**. A classe `motion-ok` no `<html>`,
 
 Duas ilustrações em **CSS 3D puro** — `perspective` no contêiner, `transform-style: preserve-3d` nos grupos e `translateZ` para afastar planos. Sem WebGL e sem dependência nova: a alternativa com Three.js custaria mais de 150kB comprimidos, contra ~2,2kB de CSS e ~1,8kB de JavaScript destas duas juntas.
 
-- **`StageLayers`** (`#anatomy`): vista explodida de um palco. Quatro camadas — Imagem (parede de LED), Luz (truss, refletores e feixes), Som (line arrays) e Infraestrutura (piso e cabeamento) — separadas no eixo Z. Passar o ponteiro numa camada apaga as outras.
+- **`StageLayers`** (`#anatomy`): vista explodida de um palco. Quatro camadas — Imagem (parede de LED), Luz (truss, refletores e feixes), Som (line arrays) e Infraestrutura (piso e cabeamento) — separadas no eixo Z. As etiquetas são botões de alternância (`aria-pressed`): clique, toque, Enter ou Espaço fixam a camada e as outras recuam; o mesmo botão ou Escape desfazem. Passar o ponteiro numa camada ou etiqueta pré-visualiza por cima da seleção. No celular, a legenda abaixo da cena faz o mesmo papel.
 - **`SignalChain`** (`#signal`): a cadeia de broadcast em perspectiva. Captação → Corte → Encode → Entrega, com um pulso que percorre os trilhos.
 
 Regras que valem para as duas:
 
+- **Hit-test em 3D é por caixa, não por pixel.** Cada camada, e cada grupo dentro dela, é uma caixa transparente do tamanho da cena empilhada em Z — e transparente ainda captura o ponteiro. A da frente ficava com todo hover e clique. Por isso a raiz das duas cenas tem `pointer-events: none` (propriedade herdada) e só a geometria visível e as etiquetas voltam a `auto`. Toda peça nova que precisar de ponteiro tem que ser religada explicitamente; toda caixa nova de agrupamento já nasce fora.
 - **Profundidade é escalável.** `--z-scale` comprime o afastamento das camadas; no celular vale 0,46, senão a cena estoura a largura.
 - **Texto nunca vive deitado.** As etiquetas são contra-rotacionadas por `rotateY(calc(var(--yaw) * -1))`, e no celular somem em favor de uma legenda abaixo da cena — as flutuantes seriam cortadas pelas bordas. Só uma das duas listas existe por vez, então nada é lido em dobro.
 - **Geometria é decoração, nome é conteúdo.** As peças (painéis, refletores, caixas) são `aria-hidden`; os nomes das camadas e das estações são listas de verdade.

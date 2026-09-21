@@ -1,4 +1,11 @@
-import { useCallback, useRef, type CSSProperties, type PointerEvent } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { motionAllowed } from "./motion";
 
 /**
@@ -33,6 +40,11 @@ const layers: Layer[] = [
 
 export function StageLayers() {
   const ref = useRef<HTMLDivElement>(null);
+  // Camada fixada por clique, toque ou teclado. O hover só pré-visualiza;
+  // quando o ponteiro sai, a cena volta para a camada escolhida.
+  const [active, setActive] = useState<string | null>(null);
+  const toggle = (id: string) =>
+    setActive((current) => (current === id ? null : id));
 
   // A cena acompanha o ponteiro de leve. Amplitude pequena de propósito:
   // é profundidade, não um brinquedo.
@@ -60,13 +72,21 @@ export function StageLayers() {
       ref={ref}
       onPointerMove={track}
       onPointerLeave={reset}
+      onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Escape" && active) setActive(null);
+      }}
     >
-      <ul className="stage3d-scene">
+      <ul
+        className="stage3d-scene"
+        data-active={active ?? undefined}
+        aria-label="Camadas do palco"
+      >
         {layers.map((layer) => (
           <li
             className="stage-layer"
             key={layer.id}
             data-layer={layer.id}
+            data-selected={active === layer.id || undefined}
             style={
               {
                 "--z": `${layer.z}px`,
@@ -125,21 +145,36 @@ export function StageLayers() {
                 </div>
               )}
             </div>
-            <span className="layer-tag">
+            {/* O nome e a nota ficam separados só pelo gap do flex, sem
+                espaço no texto — por isso o nome acessível vem explícito. */}
+            <button
+              type="button"
+              className="layer-tag"
+              aria-pressed={active === layer.id}
+              aria-label={`${layer.name}: ${layer.note}`}
+              onClick={() => toggle(layer.id)}
+            >
               <b>{layer.name}</b>
               {layer.note}
-            </span>
+            </button>
           </li>
         ))}
       </ul>
       {/* Numa tela estreita as etiquetas flutuantes não cabem sem serem
           cortadas. A mesma informação vira legenda abaixo da cena; só uma
           das duas existe por vez, então nada é lido em dobro. */}
-      <ul className="stage-legend">
+      <ul className="stage-legend" aria-label="Camadas do palco">
         {layers.map((layer) => (
           <li key={layer.id}>
-            <b>{layer.name}</b>
-            {layer.note}
+            <button
+              type="button"
+              aria-pressed={active === layer.id}
+              aria-label={`${layer.name}: ${layer.note}`}
+              onClick={() => toggle(layer.id)}
+            >
+              <b>{layer.name}</b>
+              {layer.note}
+            </button>
           </li>
         ))}
       </ul>

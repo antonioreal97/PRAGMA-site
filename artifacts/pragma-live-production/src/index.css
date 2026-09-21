@@ -1605,15 +1605,29 @@ html:not(.motion-ok) .step .step-index {
   perspective-origin: 52% 46%;
   transition: none;
 }
+/* Hit-test em 3D: cada camada (e cada grupo dentro dela) é uma caixa
+   transparente do tamanho da cena, empilhada em Z. Transparente ainda
+   captura o ponteiro — então a da frente, infraestrutura, ficava com todo
+   hover e clique da cena. pointer-events é herdado: desliga aqui e religa
+   só na geometria que se vê e nas etiquetas. */
 .stage3d-scene {
   position: absolute;
   inset: 0;
   margin: 0;
   padding: 0;
   list-style: none;
+  pointer-events: none;
   transform-style: preserve-3d;
   transform: rotateX(var(--pitch)) rotateY(var(--yaw));
   transition: transform 420ms var(--ease-out);
+}
+.layer-tag,
+.led-wall,
+.truss-beam,
+.fixture-head,
+.array,
+.deck-run {
+  pointer-events: auto;
 }
 /* Enquanto o ponteiro conduz a cena, a transição atrapalharia. */
 .stage3d:hover .stage3d-scene {
@@ -1639,10 +1653,12 @@ html:not(.motion-ok) .step .step-index {
   display: inline-flex;
   align-items: baseline;
   gap: 10px;
-  padding: 8px 14px;
-  border: 1px solid var(--line);
+  min-height: 34px;
+  padding: 8px 14px 8px 12px;
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   background: rgb(6 9 7 / 0.82);
+  cursor: pointer;
   backdrop-filter: blur(8px);
   white-space: nowrap;
   font-family: var(--font-brand-mono);
@@ -1655,16 +1671,50 @@ html:not(.motion-ok) .step .step-index {
   transition:
     border-color var(--duration) var(--ease),
     color var(--duration) var(--ease),
+    background-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
+}
+/* Indicador de opção: diz, antes de qualquer clique, que dá para escolher. */
+.layer-tag::before,
+.stage-legend button::before {
+  content: "";
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
     box-shadow var(--duration) var(--ease);
 }
 .layer-tag b {
   font-weight: 400;
   color: var(--paper);
 }
-.stage-layer:hover .layer-tag {
-  border-color: rgb(33 224 93 / 0.5);
+.layer-tag[aria-pressed="true"] {
+  border-color: rgb(33 224 93 / 0.6);
+  background: rgb(9 28 16 / 0.9);
   color: var(--acid);
   box-shadow: 0 0 24px -6px rgb(33 224 93 / 0.7);
+}
+.layer-tag[aria-pressed="true"] b {
+  color: var(--acid);
+}
+.layer-tag[aria-pressed="true"]::before,
+.stage-legend button[aria-pressed="true"]::before {
+  border-color: var(--acid);
+  background: var(--acid);
+  box-shadow: 0 0 8px rgb(33 224 93 / 0.9);
+}
+
+/* Camada fixada: as outras recuam. Vale para mouse, toque e teclado. */
+.stage3d-scene[data-active] .stage-layer {
+  opacity: 0.3;
+}
+.stage3d-scene[data-active] .stage-layer[data-selected] {
+  opacity: 1;
 }
 
 .stage-legend {
@@ -1883,14 +1933,30 @@ html.motion-ok .fixture-beam {
   );
   box-shadow: 0 0 16px rgb(33 224 93 / 0.5);
 }
+.deck-run::before {
+  content: "";
+  position: absolute;
+  inset: -12px 0;
+}
 
-/* Passar o ponteiro numa camada apaga as outras: a leitura fica na escolhida. */
+/* Passar o ponteiro numa camada pré-visualiza: apaga as outras e vence a
+   camada fixada enquanto durar. Vem depois das regras de seleção, com a
+   mesma especificidade, para ganhar pela ordem. Como a cena não recebe
+   ponteiro, .stage3d-scene:hover só acende com algo de verdade sob ele. */
 @media (hover: hover) and (pointer: fine) {
   .stage3d-scene:hover .stage-layer {
-    opacity: 0.32;
+    opacity: 0.3;
   }
   .stage3d-scene:hover .stage-layer:hover {
     opacity: 1;
+  }
+  .stage-layer:hover .layer-tag {
+    border-color: rgb(33 224 93 / 0.5);
+    color: var(--acid);
+    box-shadow: 0 0 24px -6px rgb(33 224 93 / 0.7);
+  }
+  .stage-layer:hover .layer-tag::before {
+    border-color: var(--acid);
   }
 }
 
@@ -2179,15 +2245,23 @@ html.motion-ok .fixture-beam {
   perspective: 2200px;
   perspective-origin: 50% 44%;
 }
+/* Mesmo cuidado de hit-test da cena do palco: o piso e a caixa do trilho
+   ficavam na frente das estações e das legendas. Desliga no grupo (é
+   herdado) e religa só onde há algo para apontar. */
 .chain3d-scene {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   transform-style: preserve-3d;
   transform: rotateX(var(--pitch)) rotateY(var(--yaw));
   transition: transform 420ms var(--ease-out);
 }
 .chain3d:hover .chain3d-scene {
   transition: none;
+}
+.node-face,
+.node-tag {
+  pointer-events: auto;
 }
 /* O chão que ancora a fileira: sem ele as estações flutuam. */
 .chain-floor {
@@ -2481,12 +2555,17 @@ html.motion-ok .chain-link i {
     padding: 0;
     list-style: none;
   }
-  .stage-legend li {
+  .stage-legend button {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    padding: 9px 0;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 0;
+    border: 0;
     border-top: 1px solid var(--line);
+    background: none;
+    text-align: left;
     font-family: var(--font-brand-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.1em;
@@ -2500,6 +2579,10 @@ html.motion-ok .chain-link i {
     font-weight: 500;
     letter-spacing: -0.01em;
     text-transform: none;
+    color: var(--paper);
+    transition: color var(--duration) var(--ease);
+  }
+  .stage-legend button[aria-pressed="true"] b {
     color: var(--acid);
   }
   .array-left {
