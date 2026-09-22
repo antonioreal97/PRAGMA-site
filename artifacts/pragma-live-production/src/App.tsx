@@ -115,8 +115,36 @@ function mappedStep(step: HomePage["method"]["steps"][number]): MethodStep {
   };
 }
 
+function bootPhotoUrls(home: HomePage) {
+  const images: SanityImage[] = [
+    ...(home.hero.mosaic ?? []),
+    home.about.image,
+    ...home.work.cards.map((card) => card.image),
+    ...home.gallery.photos.map((photo) => photo.image),
+    ...home.method.steps.flatMap((step) => [step.wide?.image, step.tall?.image]),
+  ].filter((image): image is SanityImage => Boolean(image?.asset));
+
+  const seen = new Set<string>();
+  const urls: string[] = [];
+  for (const image of images) {
+    const id = image.asset?._id || image.asset?.url;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    urls.push(sanityImage(image, [1280]).src);
+  }
+  return urls;
+}
+
+function releaseBoot(photos: string[]) {
+  document.dispatchEvent(new CustomEvent("pragma-boot", { detail: { photos } }));
+}
+
 function Home() {
   const page = useHomePage();
+  useEffect(() => {
+    if (page.isPending) return;
+    releaseBoot(page.data ? bootPhotoUrls(page.data.home) : []);
+  }, [page.isPending, page.data]);
   if (page.isPending) return <CmsLoading />;
   if (page.isError) {
     const error =

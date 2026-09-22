@@ -1,9 +1,14 @@
 import { ArrowLeft, Mail } from "lucide-react";
+import { useEffect } from "react";
 import { Link } from "wouter";
 import { Brand } from "@/components/site/brand";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
+  useEffect(() => {
+    document.dispatchEvent(new CustomEvent("pragma-boot", { detail: { photos: [] } }));
+  }, []);
+
   return (
     <main className="status-page">
       <Link href="/" aria-label="PRAGMA: página inicial">

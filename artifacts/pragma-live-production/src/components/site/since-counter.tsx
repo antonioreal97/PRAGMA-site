@@ -64,16 +64,15 @@ export function SinceCounter({ eyebrow }: { eyebrow: string }) {
       return;
     }
 
-    const duration = 1600;
+    const duration = 2800;
     let started = 0;
     let frame = 0;
+    let begun = false;
 
     const step = (value: number, progress: number, done: boolean) =>
       done ? value : Math.min(value, Math.floor(value * progress));
 
     const tick = (now: number) => {
-      // O relógio começa no primeiro quadro. Se o herói atrasar a thread,
-      // a contagem ainda sai do zero em vez de pular para o fim.
       if (!started) started = now;
       const t = Math.min(1, (now - started) / duration);
       const done = t >= 1;
@@ -85,8 +84,22 @@ export function SinceCounter({ eyebrow }: { eyebrow: string }) {
       if (!done) frame = requestAnimationFrame(tick);
     };
 
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    const start = () => {
+      if (begun) return;
+      begun = true;
+      frame = requestAnimationFrame(tick);
+    };
+
+    if (!document.getElementById("boot")) {
+      start();
+      return () => cancelAnimationFrame(frame);
+    }
+
+    document.addEventListener("pragma-boot-done", start, { once: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("pragma-boot-done", start);
+    };
   }, []);
 
   return (

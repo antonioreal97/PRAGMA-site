@@ -36,9 +36,212 @@
       crossorigin
     />
     <link rel="stylesheet" href="%BASE_URL%fonts/fonts.css" />
+    <style>
+      html,
+      body {
+        background: #060907;
+      }
+      html:has(#boot) {
+        overflow: hidden;
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .boot-veil {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        background:
+          radial-gradient(50% 42% at 50% 46%, rgb(33 224 93 / 0.14), transparent 68%),
+          #060907;
+        pointer-events: auto;
+      }
+      .boot-mark {
+        position: relative;
+        z-index: 1;
+        isolation: isolate;
+        width: 168px;
+        height: 168px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #0b100d;
+        box-shadow: 0 0 28px rgb(33 224 93 / 0.22);
+        transition:
+          transform 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95),
+          opacity 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+      }
+      #boot.is-out .boot-mark {
+        opacity: 0;
+        transform: scale(1.06);
+      }
+      #boot.is-out .boot-veil {
+        pointer-events: none;
+      }
+      .boot-frame {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+      }
+      .boot-frame.is-on {
+        opacity: 1;
+      }
+      .boot-logo {
+        position: absolute;
+        z-index: 2;
+        inset: 22%;
+        width: 56%;
+        height: 56%;
+        object-fit: contain;
+        filter: drop-shadow(0 0 10px rgb(0 0 0 / 0.65));
+      }
+      .boot-spin {
+        position: absolute;
+        z-index: 3;
+        inset: 0;
+        border: 2px solid rgb(33 224 93 / 0.22);
+        border-top-color: #21e05d;
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .boot-spin {
+          animation: boot-spin 0.7s linear infinite;
+        }
+      }
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-veil,
+        .boot-mark {
+          transition: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status" aria-label="Carregando">
+      <div class="boot-veil"></div>
+      <div class="boot-mark">
+        <img class="boot-frame" alt="" />
+        <img class="boot-frame" alt="" />
+        <img class="boot-logo" src="%BASE_URL%favicon.svg" alt="" />
+        <span class="boot-spin" aria-hidden="true"></span>
+      </div>
+    </div>
     <div id="root"></div>
+    <script>
+      (function () {
+        var boot = document.getElementById("boot");
+        var root = document.getElementById("root");
+        if (!boot) return;
+        if (root) root.inert = true;
+
+        var fine = window.matchMedia("(pointer: fine)").matches;
+        var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var moved = !fine || reduced;
+        var gestured = false;
+        var ready = false;
+        var done = false;
+        var photos = [];
+
+        function remove() {
+          if (root) root.inert = false;
+          if (boot.isConnected) boot.remove();
+          document.dispatchEvent(new Event("pragma-boot-done"));
+        }
+
+        var veil = boot.querySelector(".boot-veil");
+        var frames = boot.querySelectorAll(".boot-frame");
+        var front = 0;
+
+        function reveal(ms) {
+          if (!veil || reduced) return;
+          veil.style.transition = "opacity " + ms + "ms cubic-bezier(0.85, 0, 1, 0.15)";
+          veil.style.opacity = "0";
+        }
+
+        function leave() {
+          if (veil && getComputedStyle(veil).opacity === "1") reveal(300);
+          boot.classList.add("is-out");
+          window.setTimeout(remove, reduced ? 0 : 400);
+        }
+
+        function showPhoto(src) {
+          var incoming = frames[1 - front];
+          var outgoing = frames[front];
+          incoming.src = src;
+          incoming.style.zIndex = "1";
+          outgoing.style.zIndex = "0";
+          incoming.classList.add("is-on");
+          outgoing.classList.remove("is-on");
+          front = 1 - front;
+        }
+
+        function playFlash() {
+          if (!frames.length || !photos.length || reduced) {
+            leave();
+            return;
+          }
+          reveal(2000);
+          var index = 0;
+          var hold = Math.max(1, Math.floor(1600 / photos.length));
+          var step = function () {
+            if (index >= photos.length) {
+              leave();
+              return;
+            }
+            showPhoto(photos[index]);
+            index += 1;
+            window.setTimeout(step, hold);
+          };
+          step();
+        }
+
+        function finish() {
+          if (done || !moved || !ready) return;
+          done = true;
+          if (gestured) playFlash();
+          else leave();
+        }
+
+        window.addEventListener(
+          "pointermove",
+          function (event) {
+            if (event.pointerType === "touch") return;
+            gestured = true;
+            moved = true;
+            finish();
+          },
+          { passive: true },
+        );
+
+        document.addEventListener("pragma-boot", function (event) {
+          if (!boot.isConnected || done) return;
+          var detail = event.detail || {};
+          photos = Array.isArray(detail.photos) ? detail.photos : [];
+          photos.forEach(function (src) {
+            var img = new Image();
+            img.decoding = "async";
+            img.src = src;
+          });
+          ready = true;
+          finish();
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
