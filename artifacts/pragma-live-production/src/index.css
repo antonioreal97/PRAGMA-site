@@ -1154,9 +1154,18 @@ html.motion-ok .hero-cue svg {
   height: 100%;
   object-fit: cover;
 }
+html.motion-ok .work-moodboard-cell img[data-entering],
+html.motion-ok .work-moodboard-cell img[data-leaving] {
+  animation-duration: 1.8s;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  animation-fill-mode: both;
+}
 html.motion-ok .work-moodboard-cell img[data-entering] {
   z-index: 1;
-  animation: moodboard-in var(--duration-slow) var(--ease-out) both;
+  animation-name: moodboard-in;
+}
+html.motion-ok .work-moodboard-cell img[data-leaving] {
+  animation-name: moodboard-out;
 }
 @keyframes moodboard-in {
   from {
@@ -1164,6 +1173,14 @@ html.motion-ok .work-moodboard-cell img[data-entering] {
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes moodboard-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 .work-bottom {

@@ -143,8 +143,8 @@ const MOODBOARD_SIZES = [
 
 const MOODBOARD_CELLS = 6;
 const MOODBOARD_HOLD_MS = 5000;
-/** Igual a `--duration-slow`: o corte espera o fade terminar. */
-const MOODBOARD_FADE_MS = 540;
+/** Igual à animação em `.work-moodboard-cell`: o corte espera o fade terminar. */
+const MOODBOARD_FADE_MS = 1800;
 const MOODBOARD_PHASE_MS = [0, 700, 1400, 2100, 2800, 3500];
 
 function workMoodboard(feature: MappedPhoto, gallery: MappedPhoto[]) {
