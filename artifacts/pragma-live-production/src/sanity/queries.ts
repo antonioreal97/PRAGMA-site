@@ -77,7 +77,19 @@ export const homePageQuery = `{
         stills[]{ image{ ${image} }, caption }
       }
     },
-    contact{ eyebrow, title, titleAccent, note }
+    contact{
+      eyebrow,
+      title,
+      titleAccent,
+      note,
+      form{
+        heading,
+        intro,
+        submitLabel,
+        submitHint,
+        fields[]{ id, label, placeholder, hint, kind }
+      }
+    }
   },
   "settings": *[_id == "siteSettings"][0]{
     email,

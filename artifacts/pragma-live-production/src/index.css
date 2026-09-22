@@ -1118,6 +1118,7 @@ html.motion-ok .hero-cue svg {
   background: var(--ink);
 }
 .work-moodboard-cell {
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1147,9 +1148,23 @@ html.motion-ok .hero-cue svg {
   grid-row: 3;
 }
 .work-moodboard-cell img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+html.motion-ok .work-moodboard-cell img[data-entering] {
+  z-index: 1;
+  animation: moodboard-in var(--duration-slow) var(--ease-out) both;
+}
+@keyframes moodboard-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .work-bottom {
   margin-top: 26px;

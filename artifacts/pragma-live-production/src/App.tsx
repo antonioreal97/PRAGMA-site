@@ -9,7 +9,15 @@ import {
   RadioTower,
   Users,
 } from "lucide-react";
-import { Fragment, useEffect, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -133,10 +141,150 @@ const MOODBOARD_SIZES = [
   "(max-width: 900px) 30vw, 18vw",
 ];
 
+const MOODBOARD_CELLS = 6;
+const MOODBOARD_HOLD_MS = 5000;
+/** Igual a `--duration-slow`: o corte espera o fade terminar. */
+const MOODBOARD_FADE_MS = 540;
+const MOODBOARD_PHASE_MS = [0, 700, 1400, 2100, 2800, 3500];
+
 function workMoodboard(feature: MappedPhoto, gallery: MappedPhoto[]) {
   const field = gallery.filter((photo) => photo.src !== feature.src);
-  if (field.length < 5) return null;
-  return [field[0], field[1], feature, field[2], field[3], field[4]];
+  if (field.length < MOODBOARD_CELLS) return null;
+  const first = [
+    field[0],
+    field[1],
+    field[5],
+    field[2],
+    field[3],
+    field[4],
+  ].filter((photo): photo is MappedPhoto => Boolean(photo));
+  const shown = new Set(first.map((photo) => photo.src));
+  return [...first, ...field.filter((photo) => !shown.has(photo.src))];
+}
+
+function moodboardLane(photos: MappedPhoto[], index: number) {
+  const lane: MappedPhoto[] = [];
+  for (let cursor = index; cursor < photos.length; cursor += MOODBOARD_CELLS) {
+    const photo = photos[cursor];
+    if (photo) lane.push(photo);
+  }
+  return lane;
+}
+
+function MoodboardPhoto({
+  shot,
+  sizes,
+  phase,
+}: {
+  shot: MappedPhoto;
+  sizes: string;
+  phase: "steady" | "entering" | "leaving";
+}) {
+  return (
+    <img
+      src={shot.src}
+      srcSet={shot.srcSet}
+      sizes={sizes}
+      alt={phase === "leaving" ? "" : shot.alt}
+      width={shot.width}
+      height={shot.height}
+      style={{ objectPosition: shot.focus }}
+      data-entering={phase === "entering" || undefined}
+      data-leaving={phase === "leaving" || undefined}
+      decoding="async"
+    />
+  );
+}
+
+function MoodboardCell({
+  lane,
+  index,
+}: {
+  lane: MappedPhoto[];
+  index: number;
+}) {
+  const laneRef = useRef(lane);
+  laneRef.current = lane;
+  const cursor = useRef(0);
+  const [current, setCurrent] = useState(0);
+  const [leaving, setLeaving] = useState<number | null>(null);
+  const sizes = MOODBOARD_SIZES[index] ?? "16vw";
+  const phase = MOODBOARD_PHASE_MS[index] ?? 0;
+  const signature = lane.map((photo) => photo.src).join("|");
+
+  useEffect(() => {
+    const photos = laneRef.current;
+    const next = photos[(cursor.current + 1) % photos.length];
+    if (!next) return;
+    const preload = new Image();
+    preload.src = next.src;
+  }, [current, signature]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const photos = laneRef.current;
+    if (media.matches || photos.length < 2) return;
+    let interval = 0;
+    const start = window.setTimeout(() => {
+      const advance = () => {
+        const count = laneRef.current.length;
+        if (count < 2) return;
+        const previous = cursor.current;
+        const next = (previous + 1) % count;
+        cursor.current = next;
+        setLeaving(previous);
+        setCurrent(next);
+      };
+      advance();
+      interval = window.setInterval(advance, MOODBOARD_HOLD_MS);
+    }, MOODBOARD_HOLD_MS + phase);
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(interval);
+    };
+  }, [signature, phase]);
+
+  useEffect(() => {
+    if (leaving == null) return;
+    const clear = window.setTimeout(() => setLeaving(null), MOODBOARD_FADE_MS);
+    return () => window.clearTimeout(clear);
+  }, [leaving]);
+
+  const shot = lane[current];
+  const outgoing = leaving == null ? undefined : lane[leaving];
+  if (!shot) return null;
+  const fading = Boolean(outgoing && outgoing.src !== shot.src);
+
+  return (
+    <div className="work-moodboard-cell">
+      {fading && outgoing ? (
+        <MoodboardPhoto shot={outgoing} sizes={sizes} phase="leaving" />
+      ) : null}
+      <MoodboardPhoto
+        key={shot.src}
+        shot={shot}
+        sizes={sizes}
+        phase={fading ? "entering" : "steady"}
+      />
+    </div>
+  );
+}
+
+function WorkMoodboard({ photos }: { photos: MappedPhoto[] }) {
+  const lanes = useMemo(
+    () =>
+      Array.from({ length: MOODBOARD_CELLS }, (_, index) =>
+        moodboardLane(photos, index),
+      ),
+    [photos],
+  );
+  return (
+    <div className="work-moodboard">
+      {lanes.map((lane, index) => (
+        <MoodboardCell key={index} index={index} lane={lane} />
+      ))}
+    </div>
+  );
 }
 
 function mappedShot(image: SanityImage, caption: string) {
@@ -473,7 +621,7 @@ function HomeLoaded({
             </a>
           </div>
           <div data-reveal style={stagger(1, 120)}>
-            <ContactForm email={settings.email} />
+            <ContactForm email={settings.email} form={home.contact.form} />
           </div>
         </div>
       </section>
@@ -589,23 +737,7 @@ function WorkCard({
       >
         <div className="frame frame-corners work-media">
           {moodboard ? (
-            <div className="work-moodboard">
-              {moodboard.map((shot, index) => (
-                <div className="work-moodboard-cell" key={shot.src}>
-                  <img
-                    src={shot.src}
-                    srcSet={shot.srcSet}
-                    sizes={MOODBOARD_SIZES[index]}
-                    alt={shot.alt}
-                    width={shot.width}
-                    height={shot.height}
-                    style={{ objectPosition: shot.focus }}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              ))}
-            </div>
+            <WorkMoodboard photos={moodboard} />
           ) : (
             <img
               src={photo.src}

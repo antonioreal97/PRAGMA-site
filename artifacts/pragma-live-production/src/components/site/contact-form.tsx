@@ -3,11 +3,108 @@ import { ArrowUpRight, Check, Copy, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type {
+  ContactFormContent,
+  ContactQuestion,
+  ContactQuestionKind,
+} from "@/sanity/types";
 
-type Field = "name" | "email" | "project";
+const fallbackForm: ContactFormContent = {
+  heading: "Conte sobre o seu projeto",
+  intro:
+    "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+  submitLabel: "Preparar briefing",
+  submitHint: "Você revisa e envia pelo seu aplicativo de e-mail.",
+  fields: [
+    {
+      id: "name",
+      label: "Seu nome",
+      placeholder: "Como podemos te chamar?",
+      kind: "name",
+    },
+    {
+      id: "email",
+      label: "Seu e-mail",
+      placeholder: "voce@empresa.com",
+      kind: "email",
+    },
+    {
+      id: "project",
+      label: "O que vamos colocar de pé?",
+      placeholder: "Tipo de evento, data, local e o que você tem em mente…",
+      hint: "Ainda não tem todos os detalhes? Comece pela ideia.",
+      kind: "textarea",
+    },
+  ],
+};
 
-export function ContactForm({ email }: { email: string }) {
-  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
+const kinds = new Set<ContactQuestionKind>([
+  "name",
+  "email",
+  "text",
+  "textarea",
+]);
+
+function formContent(form?: ContactFormContent): ContactFormContent {
+  const fields = (form?.fields ?? []).flatMap((field) => {
+    const id = field.id?.trim();
+    if (!id || !kinds.has(field.kind) || !field.label?.trim()) return [];
+    return [{ ...field, id, label: field.label.trim() }];
+  });
+  if (!fields.length) return fallbackForm;
+  return {
+    heading: form?.heading?.trim() || fallbackForm.heading,
+    intro: form?.intro?.trim() || fallbackForm.intro,
+    submitLabel: form?.submitLabel?.trim() || fallbackForm.submitLabel,
+    submitHint: form?.submitHint?.trim() || fallbackForm.submitHint,
+    fields,
+  };
+}
+
+function maxLength(kind: ContactQuestionKind) {
+  if (kind === "name") return 100;
+  if (kind === "email") return 254;
+  if (kind === "textarea") return 1500;
+  return 200;
+}
+
+function emptyMessage(field: ContactQuestion) {
+  if (field.kind === "email")
+    return "Informe um e-mail válido, como voce@empresa.com.";
+  if (field.kind === "name")
+    return "Informe seu nome para identificarmos a conversa.";
+  if (field.kind === "textarea")
+    return "Conte um pouco sobre o que você está planejando.";
+  return `Preencha “${field.label}”.`;
+}
+
+function briefingBody(fields: ContactQuestion[], values: Map<string, string>) {
+  const name = fields.find((field) => field.kind === "name");
+  const reply = fields.find((field) => field.kind === "email");
+  const questions = fields.filter(
+    (field) => field.kind !== "name" && field.kind !== "email",
+  );
+  const answers = questions
+    .map((field) => {
+      const value = values.get(field.id) ?? "";
+      return questions.length === 1 ? value : `${field.label}\n${value}`;
+    })
+    .join("\n\n");
+  const lines = ["Olá, PRAGMA!", "", answers, ""];
+  if (name) lines.push(`Nome: ${values.get(name.id) ?? ""}`);
+  if (reply) lines.push(`E-mail: ${values.get(reply.id) ?? ""}`);
+  return lines.join("\n");
+}
+
+export function ContactForm({
+  email,
+  form,
+}: {
+  email: string;
+  form?: ContactFormContent;
+}) {
+  const content = formContent(form);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [draft, setDraft] = useState<{ body: string; url: string } | null>(
     null,
   );
@@ -16,32 +113,44 @@ export function ContactForm({ email }: { email: string }) {
   >("idle");
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const name = String(data.get("name") || "").trim();
-    const email = String(data.get("email") || "").trim();
-    const project = String(data.get("project") || "").trim();
-    const next: Partial<Record<Field, string>> = {};
-    if (!name) next.name = "Informe seu nome para identificarmos a conversa.";
-    if (
-      !email ||
-      !(form.elements.namedItem("email") as HTMLInputElement).validity.valid
-    )
-      next.email = "Informe um e-mail válido, como voce@empresa.com.";
-    if (!project)
-      next.project = "Conte um pouco sobre o que você está planejando.";
+    const formEl = event.currentTarget;
+    const data = new FormData(formEl);
+    const values = new Map(
+      content.fields.map((field) => [
+        field.id,
+        String(data.get(field.id) || "").trim(),
+      ]),
+    );
+    const next: Record<string, string> = {};
+    for (const field of content.fields) {
+      const value = values.get(field.id) ?? "";
+      if (field.kind === "email") {
+        const input = formEl.elements.namedItem(field.id);
+        if (
+          !value ||
+          !(input instanceof HTMLInputElement) ||
+          !input.validity.valid
+        ) {
+          next[field.id] = emptyMessage(field);
+        }
+        continue;
+      }
+      if (!value) next[field.id] = emptyMessage(field);
+    }
     setErrors(next);
-    const first = (Object.keys(next) as Field[])[0];
+    const first = content.fields.find((field) => next[field.id]);
     if (first) {
       requestAnimationFrame(() => {
-        (form.elements.namedItem(first) as HTMLElement)?.focus();
+        (formEl.elements.namedItem(first.id) as HTMLElement | null)?.focus();
       });
       return;
     }
-    const body = `Olá, PRAGMA!\n\n${project}\n\nNome: ${name}\nE-mail: ${email}`;
+    const name = content.fields.find((field) => field.kind === "name");
+    const subjectName = name ? values.get(name.id) : "";
+    const body = briefingBody(content.fields, values);
     setDraft({
       body,
-      url: `mailto:${email}?subject=${encodeURIComponent("Novo projeto | " + name)}&body=${encodeURIComponent(body)}`,
+      url: `mailto:${email}?subject=${encodeURIComponent("Novo projeto | " + (subjectName || "Briefing"))}&body=${encodeURIComponent(body)}`,
     });
   };
   const copy = async () => {
@@ -66,7 +175,7 @@ export function ContactForm({ email }: { email: string }) {
           target instanceof HTMLTextAreaElement
         ))
           return;
-        const field = target.name as Field;
+        const field = target.name;
         setErrors((current) => ({ ...current, [field]: undefined }));
         setDraft(null);
         setCopyState("idle");
@@ -74,80 +183,64 @@ export function ContactForm({ email }: { email: string }) {
       data-testid="form-contact"
     >
       <div className="form-heading">
-        <h3>Conte sobre o seu projeto</h3>
-        <p>
-          Preencha o briefing para preparar seu e-mail. Todos os campos são
-          obrigatórios.
-        </p>
+        <h3>{content.heading}</h3>
+        <p>{content.intro}</p>
       </div>
-      <div className="field">
-        <label htmlFor="name">Seu nome</label>
-        <Input
-          id="name"
-          name="name"
-          autoComplete="name"
-          required
-          maxLength={100}
-          placeholder="Como podemos te chamar?"
-          aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? "name-error" : undefined}
-          data-testid="input-name"
-        />
-        {errors.name && (
-          <p className="field-error" id="name-error">
-            {errors.name}
-          </p>
-        )}
-      </div>
-      <div className="field">
-        <label htmlFor="email">Seu e-mail</label>
-        <Input
-          id="email"
-          type="email"
-          name="email"
-          autoComplete="email"
-          spellCheck={false}
-          required
-          maxLength={254}
-          placeholder="voce@empresa.com"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
-          data-testid="input-email"
-        />
-        {errors.email && (
-          <p className="field-error" id="email-error">
-            {errors.email}
-          </p>
-        )}
-      </div>
-      <div className="field">
-        <label htmlFor="project">O que vamos colocar de pé?</label>
-        <Textarea
-          id="project"
-          name="project"
-          required
-          maxLength={1500}
-          placeholder="Tipo de evento, data, local e o que você tem em mente…"
-          aria-invalid={!!errors.project}
-          aria-describedby={errors.project ? "project-error" : "project-hint"}
-          data-testid="input-project"
-        />
-        <p className="field-hint" id="project-hint">
-          Ainda não tem todos os detalhes? Comece pela ideia.
-        </p>
-        {errors.project && (
-          <p className="field-error" id="project-error">
-            {errors.project}
-          </p>
-        )}
-      </div>
+      {content.fields.map((field) => {
+        const error = errors[field.id];
+        const describedBy =
+          [field.hint ? `${field.id}-hint` : null, error ? `${field.id}-error` : null]
+            .filter(Boolean)
+            .join(" ") || undefined;
+        const controlProps = {
+          id: field.id,
+          name: field.id,
+          required: true,
+          maxLength: maxLength(field.kind),
+          placeholder: field.placeholder,
+          "aria-invalid": !!error,
+          "aria-describedby": describedBy,
+          "data-testid": `input-${field.id}`,
+        };
+        return (
+          <div className="field" key={field.id}>
+            <label htmlFor={field.id}>{field.label}</label>
+            {field.kind === "textarea" ? (
+              <Textarea {...controlProps} />
+            ) : (
+              <Input
+                {...controlProps}
+                type={field.kind === "email" ? "email" : "text"}
+                autoComplete={
+                  field.kind === "email"
+                    ? "email"
+                    : field.kind === "name"
+                      ? "name"
+                      : undefined
+                }
+                spellCheck={field.kind === "email" ? false : undefined}
+              />
+            )}
+            {field.hint ? (
+              <p className="field-hint" id={`${field.id}-hint`}>
+                {field.hint}
+              </p>
+            ) : null}
+            {error ? (
+              <p className="field-error" id={`${field.id}-error`}>
+                {error}
+              </p>
+            ) : null}
+          </div>
+        );
+      })}
       <div className="form-foot">
         <Button type="submit" size="lg" data-testid="button-submit-contact">
-          Preparar briefing <ArrowUpRight aria-hidden="true" />
+          {content.submitLabel} <ArrowUpRight aria-hidden="true" />
         </Button>
-        <p className="form-hint">
-          Você revisa e envia pelo seu aplicativo de e-mail.
-        </p>
+        {content.submitHint ? (
+          <p className="form-hint">{content.submitHint}</p>
+        ) : null}
       </div>
       <div aria-live="polite" aria-atomic="true">
         {draft && (

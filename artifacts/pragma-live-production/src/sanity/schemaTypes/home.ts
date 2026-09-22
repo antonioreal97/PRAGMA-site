@@ -420,6 +420,7 @@ export const homeType = defineType({
               },
             }),
           ],
+          options: { layout: "grid" },
           validation: (rule) => rule.required().min(1),
         }),
       ],
@@ -523,6 +524,7 @@ export const homeType = defineType({
               },
             }),
           ],
+          options: { layout: "grid" },
           validation: (rule) => rule.required().min(1),
         }),
       ],
@@ -612,6 +614,9 @@ export const homeType = defineType({
                       validation: (rule) => rule.required(),
                     }),
                   ],
+                  preview: {
+                    select: { title: "caption", media: "image" },
+                  },
                 }),
                 defineField({
                   name: "tall",
@@ -630,6 +635,9 @@ export const homeType = defineType({
                       type: "string",
                     }),
                   ],
+                  preview: {
+                    select: { title: "caption", media: "image" },
+                  },
                 }),
                 defineField({
                   name: "stills",
@@ -660,10 +668,11 @@ export const homeType = defineType({
                       },
                     }),
                   ],
+                  options: { layout: "grid" },
                 }),
               ],
               preview: {
-                select: { title: "title", subtitle: "phase" },
+                select: { title: "title", subtitle: "phase", media: "wide.image" },
               },
             }),
           ],
@@ -690,6 +699,128 @@ export const homeType = defineType({
           type: "text",
           rows: 3,
           validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: "form",
+          title: "Formulário",
+          type: "object",
+          fields: [
+            defineField({
+              name: "heading",
+              title: "Título do formulário",
+              type: "string",
+              validation: (rule) => rule.required(),
+              initialValue: "Conte sobre o seu projeto",
+            }),
+            defineField({
+              name: "intro",
+              title: "Texto de apoio",
+              type: "text",
+              rows: 2,
+              validation: (rule) => rule.required(),
+              initialValue:
+                "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+            }),
+            defineField({
+              name: "fields",
+              title: "Perguntas",
+              description:
+                "A ordem aqui é a ordem do formulário. Nome e e-mail entram no assunto e no rodapé do e-mail. As demais perguntas formam o briefing.",
+              type: "array",
+              of: [
+                defineArrayMember({
+                  type: "object",
+                  fields: [
+                    defineField({
+                      name: "id",
+                      title: "Identificador",
+                      description: "Sem espaços. Ex.: name, email, project.",
+                      type: "string",
+                      validation: (rule) =>
+                        rule.required().regex(/^[a-z][a-z0-9]*$/, {
+                          name: "identificador",
+                          invert: false,
+                        }),
+                    }),
+                    defineField({
+                      name: "label",
+                      title: "Pergunta",
+                      type: "string",
+                      validation: (rule) => rule.required(),
+                    }),
+                    defineField({
+                      name: "placeholder",
+                      title: "Texto de exemplo",
+                      type: "string",
+                    }),
+                    defineField({
+                      name: "hint",
+                      title: "Dica",
+                      type: "string",
+                    }),
+                    defineField({
+                      name: "kind",
+                      title: "Tipo",
+                      type: "string",
+                      options: {
+                        list: [
+                          { title: "Nome", value: "name" },
+                          { title: "E-mail", value: "email" },
+                          { title: "Texto curto", value: "text" },
+                          { title: "Texto longo", value: "textarea" },
+                        ],
+                        layout: "radio",
+                      },
+                      validation: (rule) => rule.required(),
+                    }),
+                  ],
+                  preview: {
+                    select: { title: "label", subtitle: "kind" },
+                  },
+                }),
+              ],
+              validation: (rule) =>
+                rule.required().min(1).custom((fields) => {
+                  if (!Array.isArray(fields)) return true;
+                  const ids = fields
+                    .map((field) =>
+                      field && typeof field === "object" && "id" in field
+                        ? field.id
+                        : undefined,
+                    )
+                    .filter((id): id is string => typeof id === "string");
+                  const duplicate = ids.find(
+                    (id, index) => ids.indexOf(id) !== index,
+                  );
+                  if (duplicate) return `Identificador duplicado: ${duplicate}`;
+                  const kinds = new Set(
+                    fields.map((field) =>
+                      field && typeof field === "object" && "kind" in field
+                        ? field.kind
+                        : undefined,
+                    ),
+                  );
+                  if (!kinds.has("name")) return "Inclua uma pergunta do tipo Nome.";
+                  if (!kinds.has("email"))
+                    return "Inclua uma pergunta do tipo E-mail.";
+                  return true;
+                }),
+            }),
+            defineField({
+              name: "submitLabel",
+              title: "Botão",
+              type: "string",
+              validation: (rule) => rule.required(),
+              initialValue: "Preparar briefing",
+            }),
+            defineField({
+              name: "submitHint",
+              title: "Texto abaixo do botão",
+              type: "string",
+              initialValue:
+                "Você revisa e envia pelo seu aplicativo de e-mail.",
+            }),
+          ],
         }),
       ],
     }),

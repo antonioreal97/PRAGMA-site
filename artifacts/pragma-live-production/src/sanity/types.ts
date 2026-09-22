@@ -113,7 +113,26 @@ export type HomePage = {
     title: string;
     titleAccent?: string;
     note: string;
+    form?: ContactFormContent;
   };
+};
+
+export type ContactQuestionKind = "name" | "email" | "text" | "textarea";
+
+export type ContactQuestion = {
+  id: string;
+  label: string;
+  placeholder?: string;
+  hint?: string;
+  kind: ContactQuestionKind;
+};
+
+export type ContactFormContent = {
+  heading: string;
+  intro: string;
+  submitLabel: string;
+  submitHint?: string;
+  fields: ContactQuestion[];
 };
 
 export type HomePayload = {

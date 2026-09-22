@@ -578,6 +578,40 @@ async function seed() {
       title: "Tem uma ideia?",
       titleAccent: "Vamos fazer.",
       note: "Conte o que está planejando. Vamos encontrar um caminho claro para colocar isso em cena.",
+      form: {
+        heading: "Conte sobre o seu projeto",
+        intro:
+          "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+        submitLabel: "Preparar briefing",
+        submitHint: "Você revisa e envia pelo seu aplicativo de e-mail.",
+        fields: [
+          {
+            _key: "name",
+            _type: "object",
+            id: "name",
+            label: "Seu nome",
+            placeholder: "Como podemos te chamar?",
+            kind: "name",
+          },
+          {
+            _key: "email",
+            _type: "object",
+            id: "email",
+            label: "Seu e-mail",
+            placeholder: "voce@empresa.com",
+            kind: "email",
+          },
+          {
+            _key: "project",
+            _type: "object",
+            id: "project",
+            label: "O que vamos colocar de pé?",
+            placeholder: "Tipo de evento, data, local e o que você tem em mente…",
+            hint: "Ainda não tem todos os detalhes? Comece pela ideia.",
+            kind: "textarea",
+          },
+        ],
+      },
     },
   });
 
