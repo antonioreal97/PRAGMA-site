@@ -709,13 +709,32 @@ html.motion-ok .hero-beam {
 .hero .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 14px 7px 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 12px 6px 10px;
+  font-size: 0.625rem;
   border: 1px solid rgb(33 224 93 / 0.28);
   border-radius: 999px;
   background: rgb(33 224 93 / 0.07);
   backdrop-filter: blur(10px);
   color: var(--acid);
+}
+.since-slash {
+  opacity: 0.45;
+}
+.since-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7em;
+}
+.since-num {
+  display: inline-block;
+  min-width: 2ch;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+  text-align: right;
 }
 .live-dot {
   position: relative;

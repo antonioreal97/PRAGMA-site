@@ -19,6 +19,7 @@ import { Brand } from "@/components/site/brand";
 import { CmsError, CmsLoading } from "@/components/site/cms-status";
 import { Header } from "@/components/site/header";
 import { HeroMosaic } from "@/components/site/hero-mosaic";
+import { SinceCounter } from "@/components/site/since-counter";
 import { ContactForm } from "@/components/site/contact-form";
 import { useSiteMotion, useSpotlight } from "@/components/site/motion";
 import { StageLayers } from "@/components/site/stage-layers";
@@ -178,7 +179,7 @@ function HomeLoaded({
             <div className="hero-content">
               <p className="eyebrow mono">
                 <span className="live-dot" aria-hidden="true" />
-                {home.hero.eyebrow}
+                <SinceCounter eyebrow={home.hero.eyebrow} />
               </p>
               <h1 id="hero-title">
                 <span className="hero-line">
