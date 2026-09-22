@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/site/brand";
 import { CmsError, CmsLoading } from "@/components/site/cms-status";
 import { Header } from "@/components/site/header";
-import { HeroMedia } from "@/components/site/hero-media";
+import { HeroMosaic } from "@/components/site/hero-mosaic";
 import { ContactForm } from "@/components/site/contact-form";
 import { useSiteMotion, useSpotlight } from "@/components/site/motion";
 import { StageLayers } from "@/components/site/stage-layers";
@@ -28,7 +28,6 @@ import NotFound from "@/pages/not-found";
 import { Route, Switch, Router as WouterRouter } from "wouter";
 import { PhotoGallery } from "@/components/site/photo-gallery";
 import {
-  fileUrl,
   hotspotFocus,
   imageDimensions,
   sanityImage,
@@ -144,8 +143,6 @@ function HomeLoaded({
     if (meta) meta.setAttribute("content", settings.seoDescription);
   }, [settings.seoDescription, settings.seoTitle]);
 
-  const poster = sanityImage(requireImage(home.hero.poster, "hero poster")).src;
-  const video = fileUrl(home.hero.video);
   const aboutImage = requireImage(home.about.image, "about");
   const aboutPhoto = mappedPhoto(aboutImage, home.about.alt, home.about.caption);
   const galleryPhotos = home.gallery.photos.map((photo, index) =>
@@ -155,6 +152,13 @@ function HomeLoaded({
       photo.caption,
     ),
   );
+  const mosaicTiles = (home.hero.mosaic ?? [])
+    .filter((image): image is SanityImage => Boolean(image?.asset))
+    .map((image) => {
+      const { src, srcSet } = sanityImage(image, [480, 720, 960]);
+      const { width, height } = imageDimensions(image);
+      return { src, srcSet, width, height };
+    });
   const methodSteps = home.method.steps.map(mappedStep);
   const [feature, ...tiles] = home.work.cards;
   if (!feature) {
@@ -169,7 +173,7 @@ function HomeLoaded({
       <Header links={settings.nav} />
       <main id="top" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
-          <HeroMedia poster={poster} videoUrl={video} />
+          <HeroMosaic tiles={mosaicTiles} />
           <div className="wrap hero-grid">
             <div className="hero-content">
               <p className="eyebrow mono">

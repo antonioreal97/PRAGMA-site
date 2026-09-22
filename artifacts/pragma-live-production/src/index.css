@@ -586,26 +586,84 @@ html.motion-ok [data-reveal].is-in {
   padding-block: calc(var(--header-h) + 56px) 132px;
   background: var(--ink);
 }
-.hero-media {
+/* Parede cinética: colunas coladas, cantos retos, loop lento. */
+.hero-mosaic {
   position: absolute;
   inset: 0;
   z-index: -3;
   overflow: hidden;
+  pointer-events: none;
 }
-.hero-media img,
-.hero-media video {
+.hero-mosaic-wall {
   position: absolute;
-  inset: 0;
+  inset: -8% 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  opacity: 0.72;
+}
+.hero-mosaic-col {
+  overflow: hidden;
+  min-width: 0;
+  pointer-events: auto;
+}
+.hero-mosaic-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+html.motion-ok .hero-mosaic-track {
+  animation: mosaic-scroll var(--mosaic-dur, 60s) linear infinite;
+  animation-direction: var(--mosaic-dir, normal);
+}
+.hero-mosaic[data-paused] .hero-mosaic-track {
+  animation-play-state: paused;
+}
+@media (hover: hover) and (pointer: fine) {
+  html.motion-ok .hero-mosaic-col:hover .hero-mosaic-track {
+    animation-play-state: paused;
+  }
+}
+@keyframes mosaic-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+.hero-mosaic-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Fecha o vão entre as duas cópias — o -50% do loop depende disso. */
+  padding-bottom: 6px;
+}
+.hero-mosaic-tile {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  aspect-ratio: var(--ar, 3 / 4);
+}
+.hero-mosaic-tile img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.6;
+  transform: scale(1.001);
+  transition: transform 700ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html.motion-ok .hero-mosaic-tile:hover img {
+    transform: scale(1.06);
+  }
 }
 /* Camadas de leitura: escurece onde o texto vive, abre onde a imagem importa. */
 .hero-scrim {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 1;
   pointer-events: none;
   background:
     radial-gradient(90% 70% at 18% 45%, rgb(6 9 7 / 0.94), rgb(6 9 7 / 0.55) 45%, transparent 78%),
@@ -614,12 +672,12 @@ html.motion-ok [data-reveal].is-in {
 .hero-glow {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 1;
   pointer-events: none;
   background: radial-gradient(60% 50% at 78% 38%, rgb(33 224 93 / 0.16), transparent 68%);
 }
 .hero .fx-grid {
-  z-index: -2;
+  z-index: 1;
   opacity: 0.7;
 }
 /* Um feixe lento atravessa a abertura, como uma luz de palco. */
@@ -628,7 +686,7 @@ html.motion-ok [data-reveal].is-in {
   top: 0;
   bottom: 0;
   width: 42vw;
-  z-index: -2;
+  z-index: 1;
   pointer-events: none;
   background: linear-gradient(90deg, transparent, rgb(33 224 93 / 0.07), transparent);
   opacity: 0;
@@ -2402,6 +2460,12 @@ html.motion-ok .fixture-beam {
   .hero {
     padding-block: calc(var(--header-h) + 44px) 124px;
   }
+  .hero-mosaic-wall {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .hero-mosaic-col:nth-child(n + 4) {
+    display: none;
+  }
   .hero-scrim {
     background:
       radial-gradient(120% 80% at 30% 45%, rgb(6 9 7 / 0.92), rgb(6 9 7 / 0.6) 50%, transparent 85%),
@@ -2440,6 +2504,18 @@ html.motion-ok .fixture-beam {
 @media (max-width: 600px) {
   .hero {
     padding-block: calc(var(--header-h) + 30px) 120px;
+  }
+  .hero-mosaic-wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    opacity: 0.88;
+  }
+  .hero-mosaic-col:nth-child(n + 3) {
+    display: none;
+  }
+  .hero-scrim {
+    background:
+      linear-gradient(90deg, rgb(6 9 7 / 0.94) 0%, rgb(6 9 7 / 0.78) 42%, rgb(6 9 7 / 0.28) 78%, rgb(6 9 7 / 0.4)),
+      linear-gradient(180deg, rgb(6 9 7 / 0.72), rgb(6 9 7 / 0.2) 36%, rgb(6 9 7 / 0.92));
   }
   .hero h1 {
     font-size: clamp(2.5rem, 10.6vw, 3.75rem);
@@ -2541,8 +2617,7 @@ html.motion-ok .fixture-beam {
   .fx-grain {
     display: none;
   }
-  .hero-media img,
-  .hero-media video {
+  .hero-mosaic-wall {
     opacity: 0.4;
   }
   .accent-gradient {

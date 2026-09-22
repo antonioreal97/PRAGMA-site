@@ -19,8 +19,7 @@ export const homePageQuery = `{
       secondaryCtaLabel,
       secondaryCtaHref,
       consoleLocation,
-      poster{ ${image} },
-      video{ asset->{ url, mimeType } }
+      mosaic[]{ ${image} }
     },
     about{
       label,

@@ -114,17 +114,26 @@ export const homeType = defineType({
           validation: (rule) => rule.required(),
         }),
         defineField({
-          name: "poster",
-          title: "Poster do vídeo",
-          type: "image",
-          options: { hotspot: true },
-          validation: (rule) => rule.required(),
-        }),
-        defineField({
-          name: "video",
-          title: "Vídeo",
-          type: "file",
-          options: { accept: "video/*" },
+          name: "mosaic",
+          title: "Mosaico da abertura",
+          description:
+            "Parede de fotos atrás do título. A ordem importa: as fotos são distribuídas em colunas. Ideal 12–40 imagens, lado maior ≥ 960px. Se vazio, o site usa o mosaico padrão.",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "image",
+              options: { hotspot: true },
+              validation: (rule) => rule.required(),
+            }),
+          ],
+          options: {
+            layout: "grid",
+          },
+          validation: (rule) =>
+            rule
+              .min(8)
+              .warning("Com menos de 8 fotos a parede fica rala.")
+              .max(60),
         }),
       ],
     }),

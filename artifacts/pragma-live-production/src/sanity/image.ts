@@ -40,10 +40,6 @@ export function tallImage(source: SanityImageSource) {
   return sanityImage(source, TALL_WIDTHS);
 }
 
-export function fileUrl(file?: { asset?: { url?: string } } | null) {
-  return file?.asset?.url;
-}
-
 export function imageDimensions(image: SanityImage) {
   const width = image.asset?.metadata?.dimensions?.width;
   const height = image.asset?.metadata?.dimensions?.height;

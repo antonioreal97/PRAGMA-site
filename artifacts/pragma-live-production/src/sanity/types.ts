@@ -15,13 +15,6 @@ export type SanityImage = {
   };
 };
 
-export type SanityFile = {
-  asset?: {
-    url?: string;
-    mimeType?: string;
-  };
-};
-
 export type NavLink = {
   id: string;
   label: string;
@@ -46,8 +39,7 @@ export type HomePage = {
     secondaryCtaLabel: string;
     secondaryCtaHref: string;
     consoleLocation: string;
-    poster: SanityImage;
-    video?: SanityFile;
+    mosaic?: SanityImage[];
   };
   about: {
     label: string;

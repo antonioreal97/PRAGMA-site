@@ -9,6 +9,7 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "node --env-file=.env ./node_modules/sanity/bin/sanity exec ./scripts/seed-sanity.ts --with-user-token",
+    "seed:mosaic": "node --env-file=.env ./node_modules/sanity/bin/sanity exec ./scripts/seed-mosaic.ts --with-user-token",
     "studio:deploy": "SANITY_STUDIO_HOSTED=true SANITY_STUDIO_PREVIEW_ORIGIN=https://pragmasite.vercel.app node --env-file=.env ./node_modules/sanity/bin/sanity deploy --url pragma-live --yes"
   },
   "devDependencies": {

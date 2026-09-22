@@ -99,11 +99,14 @@ async function seed() {
 
   const photos = resolve(appRoot, "src/assets/photos");
   const method = resolve(appRoot, "src/assets/method");
+  const mosaicDir = resolve(appRoot, "src/assets/mosaic");
   const attached = resolve(repoRoot, "attached_assets");
 
+  const mosaicFiles = Array.from({ length: 41 }, (_, i) =>
+    resolve(mosaicDir, `tile-${String(i + 1).padStart(2, "0")}.avif`),
+  );
+
   const [
-    posterId,
-    videoId,
     teamId,
     facadeId,
     stageId,
@@ -127,13 +130,8 @@ async function seed() {
     executarTall,
     entregarWide,
     entregarTall,
+    ...mosaicIds
   ] = await Promise.all([
-    upload(client, "image", resolve(attached, "pragma-brand-cover.png")),
-    upload(
-      client,
-      "file",
-      resolve(attached, "1108328_1080p_4k_1280x720_1789673316521.mp4"),
-    ),
     upload(client, "image", resolve(photos, "equipe.jpg")),
     upload(client, "image", resolve(attached, "pragma-facade-vehicle.jpg")),
     upload(client, "image", resolve(photos, "palco-tenda.jpg")),
@@ -157,6 +155,7 @@ async function seed() {
     upload(client, "image", resolve(method, "executar-tall-1080.jpg")),
     upload(client, "image", resolve(method, "entregar-wide-1920.jpg")),
     upload(client, "image", resolve(method, "entregar-tall-1080.jpg")),
+    ...mosaicFiles.map((file) => upload(client, "image", file)),
   ]);
 
   await client.createOrReplace({
@@ -188,11 +187,10 @@ async function seed() {
       secondaryCtaLabel: "Conheça nossas capacidades",
       secondaryCtaHref: "#capabilities",
       consoleLocation: "Brasília, DF",
-      poster: imageField(posterId),
-      video: {
-        _type: "file",
-        asset: { _type: "reference", _ref: videoId },
-      },
+      mosaic: mosaicIds.map((assetId, index) => ({
+        ...imageField(assetId),
+        _key: `mosaic-${String(index + 1).padStart(2, "0")}`,
+      })),
     },
     about: {
       label: "O que fazemos",
