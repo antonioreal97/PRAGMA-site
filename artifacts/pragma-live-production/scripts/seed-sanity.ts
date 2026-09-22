@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, readFileSync } from "node:fs";
+import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient, type SanityClient } from "@sanity/client";
@@ -58,6 +58,14 @@ function imageField(
   };
 }
 
+function still(key: string, assetId: string, caption: string, focus: string) {
+  return {
+    _key: key,
+    image: imageField(assetId, focus),
+    caption,
+  };
+}
+
 async function upload(
   client: SanityClient,
   kind: "image" | "file",
@@ -102,9 +110,10 @@ async function seed() {
   const mosaicDir = resolve(appRoot, "src/assets/mosaic");
   const attached = resolve(repoRoot, "attached_assets");
 
-  const mosaicFiles = Array.from({ length: 41 }, (_, i) =>
-    resolve(mosaicDir, `tile-${String(i + 1).padStart(2, "0")}.avif`),
-  );
+  const mosaicFiles = readdirSync(mosaicDir)
+    .filter((name) => /^tile-\d+\.avif$/.test(name))
+    .sort()
+    .map((name) => resolve(mosaicDir, name));
 
   const [
     teamId,
@@ -130,21 +139,30 @@ async function seed() {
     executarTall,
     entregarWide,
     entregarTall,
+    escutarCabine,
+    escutarEntrevista,
+    desenharEstande,
+    desenharDebate,
+    prepararEquipe,
+    prepararIntervalo,
+    executarGrade,
+    executarDrone,
+    entregarLuzes,
     ...mosaicIds
   ] = await Promise.all([
     upload(client, "image", resolve(photos, "equipe.jpg")),
     upload(client, "image", resolve(attached, "pragma-facade-vehicle.jpg")),
-    upload(client, "image", resolve(photos, "palco-tenda.jpg")),
-    upload(client, "image", resolve(photos, "streaming-mesa.jpg")),
-    upload(client, "image", resolve(photos, "feira-palco-led.jpg")),
-    upload(client, "image", resolve(photos, "corte-ao-vivo.jpg")),
-    upload(client, "image", resolve(photos, "operador-noite.jpg")),
-    upload(client, "image", resolve(photos, "podcast-estudio.jpg")),
-    upload(client, "image", resolve(photos, "show-palco.jpg")),
-    upload(client, "image", resolve(photos, "entrevista-set.jpg")),
-    upload(client, "image", resolve(photos, "camera-fx30.jpg")),
-    upload(client, "image", resolve(photos, "tenda-panorama.jpg")),
-    upload(client, "image", resolve(photos, "camera-palco-externo.jpg")),
+    upload(client, "image", resolve(photos, "palco-tenda-1920.jpg")),
+    upload(client, "image", resolve(photos, "streaming-mesa-1920.jpg")),
+    upload(client, "image", resolve(photos, "feira-palco-led-1920.jpg")),
+    upload(client, "image", resolve(photos, "corte-ao-vivo-1920.jpg")),
+    upload(client, "image", resolve(photos, "operador-noite-1920.jpg")),
+    upload(client, "image", resolve(photos, "podcast-estudio-1920.jpg")),
+    upload(client, "image", resolve(photos, "show-palco-1920.jpg")),
+    upload(client, "image", resolve(photos, "entrevista-set-1920.jpg")),
+    upload(client, "image", resolve(photos, "camera-fx30-1920.jpg")),
+    upload(client, "image", resolve(photos, "tenda-panorama-1920.jpg")),
+    upload(client, "image", resolve(photos, "camera-palco-externo-1920.jpg")),
     upload(client, "image", resolve(method, "escutar-wide-1920.jpg")),
     upload(client, "image", resolve(method, "escutar-tall-1080.jpg")),
     upload(client, "image", resolve(method, "desenhar-wide-1920.jpg")),
@@ -155,6 +173,15 @@ async function seed() {
     upload(client, "image", resolve(method, "executar-tall-1080.jpg")),
     upload(client, "image", resolve(method, "entregar-wide-1920.jpg")),
     upload(client, "image", resolve(method, "entregar-tall-1080.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-cabine-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-entrevista-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-estande-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-debate-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-equipe-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-intervalo-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-grade-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-drone-1920.jpg")),
+    upload(client, "image", resolve(photos, "bastidores-luzes-1920.jpg")),
     ...mosaicFiles.map((file) => upload(client, "image", file)),
   ]);
 
@@ -177,6 +204,15 @@ async function seed() {
   await client.createOrReplace({
     _id: "home",
     _type: "home",
+    sectionOrder: [
+      "about",
+      "capabilities",
+      "work",
+      "broadcast",
+      "gallery",
+      "method",
+      "contact",
+    ],
     hero: {
       eyebrow: "Live production / desde 2016",
       titleLine1: "A ideia entra.",
@@ -208,24 +244,6 @@ async function seed() {
       image: imageField(teamId),
       alt: "Cinco integrantes da equipe, de casaco preto, lado a lado em um evento noturno.",
       caption: "A equipe em campo",
-    },
-    anatomy: {
-      label: "Anatomia",
-      title: "Quatro camadas.",
-      titleAccent: "Um sistema só.",
-      intro:
-        "Um evento não é uma coisa: são camadas que precisam chegar juntas. Montamos cada uma pensando na próxima.",
-      layers: [
-        { _key: "imagem", id: "imagem", name: "Imagem", note: "LED e captação" },
-        { _key: "luz", id: "luz", name: "Luz", note: "Truss e desenho" },
-        { _key: "som", id: "som", name: "Som", note: "Line array" },
-        {
-          _key: "infra",
-          id: "infra",
-          name: "Infraestrutura",
-          note: "Energia e cabo",
-        },
-      ],
     },
     capabilities: {
       label: "Capacidades",
@@ -300,7 +318,7 @@ async function seed() {
           copy: "Planejamento, equipe e infraestrutura conectados para cuidar de cada detalhe do encontro.",
           testId: "card-project-summit",
           image: imageField(stageId),
-          alt: "Câmera em tripé no canto do palco de um show em tenda, com painel de LED ao fundo.",
+          alt: "Operador de headset junto de duas câmeras no tripé, no gramado do evento.",
         },
         {
           _key: "stream",
@@ -308,7 +326,7 @@ async function seed() {
           copy: "Captação, realização e streaming para levar a experiência a quem acompanha de qualquer lugar.",
           testId: "card-project-stream",
           image: imageField(streamId),
-          alt: "Mesa de som, notebook com software de transmissão e switcher durante a gravação de um podcast.",
+          alt: "Operador de headset no notebook, entre cases e luz de palco.",
         },
       ],
     },
@@ -348,56 +366,56 @@ async function seed() {
         {
           _key: "feira",
           image: imageField(feiraId),
-          caption: "Palco com LED e captação",
-          alt: "Câmera com monitor externo registrando uma palestra em um palco com painel de LED, diante da plateia.",
+          caption: "Drone em campo",
+          alt: "Operador de headset com o drone e o controle, entre os cases, em um evento noturno.",
         },
         {
           _key: "corte",
           image: imageField(corteId),
-          caption: "Corte ao vivo",
-          alt: "Mesa de corte de vídeo com multiview das câmeras durante um show iluminado em azul.",
+          caption: "Sala de controle",
+          alt: "Equipe na sala envidraçada, com o multiview aberto durante a transmissão.",
         },
         {
           _key: "operador",
           image: imageField(operadorId),
-          caption: "Câmera e intercom",
-          alt: "Operador de câmera com headset ao lado de uma câmera com teleobjetiva em um evento noturno ao ar livre.",
+          caption: "Palco e plateia",
+          alt: "Câmeras no tripé diante do palco, com a plateia sentada e o telão aceso.",
         },
         {
           _key: "podcast",
           image: imageField(podcastId),
-          caption: "Montagem de set",
-          alt: "Equipe montando um set de podcast com câmeras e mesa em um estande de feira.",
+          caption: "Gimbal na mão",
+          alt: "Operador de headset segurando o gimbal com a câmera, pronto para gravar.",
         },
         {
           _key: "show",
           image: imageField(showId),
           caption: "Beira de palco",
-          alt: "Mão ajustando uma câmera em tripé ao lado do palco durante um show noturno.",
+          alt: "Operador agachado com o gimbal, ao lado de um pilar florido, durante o evento.",
         },
         {
           _key: "entrevista",
           image: imageField(entrevistaId),
-          caption: "Entrevista gravada",
-          alt: "Set de entrevista com câmera, notebook e mesa de som em uma sala.",
+          caption: "Equipe na tenda",
+          alt: "Dois integrantes da equipe no palco da tenda, com a plateia e a treliça ao fundo.",
         },
         {
           _key: "camera",
           image: imageField(cameraId),
           caption: "Captação",
-          alt: "Mão segurando uma câmera Sony FX30 dentro de uma grande tenda de eventos.",
+          alt: "Operador de headset com o gimbal, e outra câmera no tripé atrás.",
         },
         {
           _key: "tenda",
           image: imageField(tendaId),
-          caption: "Evento em tenda",
-          alt: "Câmera em tripé registrando uma palestra em uma grande tenda com plateia e telões.",
+          caption: "De frente para a arena",
+          alt: "Operador de costas, na câmera, com a plateia e a treliça à frente.",
         },
         {
           _key: "externo",
           image: imageField(palcoExternoId),
-          caption: "Show ao ar livre",
-          alt: "Câmera com monitor montada em tripé, apontada para um palco ao ar livre.",
+          caption: "Gimbal",
+          alt: "Operador de perfil, de headset, com o gimbal e a câmera na mão.",
         },
       ],
     },
@@ -417,14 +435,27 @@ async function seed() {
           title: "Escutar",
           copy: "Entender o que precisa ser dito, e o que não pode dar errado.",
           wide: {
-            image: imageField(escutarWide, "50% 60%"),
-            caption:
-              "Entrevista numa sala, com câmeras, luz e mesa de som prontas.",
+            image: imageField(escutarWide, "40% 45%"),
+            caption: "Operador de headset conferindo o plano no celular.",
           },
           tall: {
-            image: imageField(escutarTall, "45% 50%"),
-            caption: "Câmera com monitor gravando uma entrevista.",
+            image: imageField(escutarTall, "60% 40%"),
+            caption: "Operador de headset com o gimbal na mão.",
           },
+          stills: [
+            still(
+              "cabine",
+              escutarCabine,
+              "Cabine de corte, com a entrevista no monitor.",
+              "42% 58%",
+            ),
+            still(
+              "entrevista",
+              escutarEntrevista,
+              "Conversa no estande, microfone aberto.",
+              "38% 42%",
+            ),
+          ],
         },
         {
           _key: "desenhar",
@@ -434,13 +465,27 @@ async function seed() {
           title: "Desenhar",
           copy: "Traduzir ideia em planta, timeline, rider e plano B.",
           wide: {
-            image: imageField(desenharWide, "50% 45%"),
-            caption: "Tenda vazia, com as cadeiras ainda sendo arrumadas.",
+            image: imageField(desenharWide, "50% 55%"),
+            caption: "Operador agachado com o gimbal, diante do painel do evento.",
           },
           tall: {
-            image: imageField(desenharTall, "50% 40%"),
-            caption: "Tenda vazia antes do evento, com a câmera em primeiro plano.",
+            image: imageField(desenharTall, "50% 30%"),
+            caption: "Câmera no corredor da tenda, apontada para o palco.",
           },
+          stills: [
+            still(
+              "estande",
+              desenharEstande,
+              "Gimbal no corredor do estande, ajustando o quadro.",
+              "38% 42%",
+            ),
+            still(
+              "debate",
+              desenharDebate,
+              "Monitor com o plano do debate, câmera no tripé.",
+              "50% 38%",
+            ),
+          ],
         },
         {
           _key: "preparar",
@@ -450,13 +495,27 @@ async function seed() {
           title: "Preparar",
           copy: "Alinhar equipe, equipamento e expectativa na mesma frequência.",
           wide: {
-            image: imageField(prepararWide, "50% 50%"),
-            caption: "Equipe montando o set de um estande de feira.",
+            image: imageField(prepararWide, "50% 45%"),
+            caption: "Equipe reunida antes de começar.",
           },
           tall: {
-            image: imageField(prepararTall, "40% 50%"),
-            caption: "Câmeras posicionadas no set, antes de começar a gravar.",
+            image: imageField(prepararTall, "50% 35%"),
+            caption: "Câmera erguida para achar o enquadramento.",
           },
+          stills: [
+            still(
+              "equipe",
+              prepararEquipe,
+              "Equipe alinhada, headset ligado, antes de entrar.",
+              "50% 42%",
+            ),
+            still(
+              "intervalo",
+              prepararIntervalo,
+              "Operador pronto, no intervalo da transmissão.",
+              "62% 42%",
+            ),
+          ],
         },
         {
           _key: "executar",
@@ -466,14 +525,27 @@ async function seed() {
           title: "Executar",
           copy: "Estar presente, atento e um passo à frente do momento.",
           wide: {
-            image: imageField(executarWide, "45% 50%"),
-            caption:
-              "Show em tenda com painel de LED, acompanhado da beira do palco.",
+            image: imageField(executarWide, "70% 40%"),
+            caption: "Operador de headset na câmera, sob a estrutura do evento.",
           },
           tall: {
-            image: imageField(executarTall, "50% 45%"),
-            caption: "Multiview do corte ao vivo durante um show.",
+            image: imageField(executarTall, "50% 30%"),
+            caption: "Câmera no tripé, com o palco e o telão ao fundo.",
           },
+          stills: [
+            still(
+              "grade",
+              executarGrade,
+              "Câmera na grade, com a plateia atrás.",
+              "42% 40%",
+            ),
+            still(
+              "drone",
+              executarDrone,
+              "Drone e controle, no meio do evento.",
+              "50% 42%",
+            ),
+          ],
         },
         {
           _key: "entregar",
@@ -483,13 +555,21 @@ async function seed() {
           title: "Entregar",
           copy: "Fechar o ciclo com o mesmo cuidado que abriu.",
           wide: {
-            image: imageField(entregarWide, "50% 50%"),
-            caption: "Plateia no auditório, com a câmera acompanhando o palco.",
+            image: imageField(entregarWide, "50% 40%"),
+            caption: "Operador de costas, sob as bandeirinhas e a luz do evento.",
           },
           tall: {
-            image: imageField(entregarTall, "50% 50%"),
-            caption: "Plateia na tenda, com os telões acesos.",
+            image: imageField(entregarTall, "45% 30%"),
+            caption: "Captação do palco, com o telão aceso e a plateia na frente.",
           },
+          stills: [
+            still(
+              "luzes",
+              entregarLuzes,
+              "Operador de costas, sob as luzes e as bandeirinhas.",
+              "48% 42%",
+            ),
+          ],
         },
       ],
     },

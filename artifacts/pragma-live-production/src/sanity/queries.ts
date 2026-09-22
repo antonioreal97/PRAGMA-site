@@ -9,6 +9,7 @@ const image = `
 
 export const homePageQuery = `{
   "home": *[_id == "home"][0]{
+    sectionOrder,
     hero{
       eyebrow,
       titleLine1,
@@ -30,13 +31,6 @@ export const homePageQuery = `{
       image{ ${image} },
       alt,
       caption
-    },
-    anatomy{
-      label,
-      title,
-      titleAccent,
-      intro,
-      layers[]{ id, name, note }
     },
     capabilities{
       label,
@@ -79,7 +73,8 @@ export const homePageQuery = `{
         title,
         copy,
         wide{ image{ ${image} }, caption },
-        tall{ image{ ${image} }, caption }
+        tall{ image{ ${image} }, caption },
+        stills[]{ image{ ${image} }, caption }
       }
     },
     contact{ eyebrow, title, titleAccent, note }

@@ -7,67 +7,67 @@
   {
     "file" : "tile-02.avif",
     "height" : 640,
-    "width" : 480
+    "width" : 426
   },
   {
     "file" : "tile-03.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 480,
+    "width" : 640
   },
   {
     "file" : "tile-04.avif",
-    "height" : 360,
+    "height" : 480,
     "width" : 640
   },
   {
     "file" : "tile-05.avif",
-    "height" : 360,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-06.avif",
     "height" : 640,
-    "width" : 360
+    "width" : 480
   },
   {
     "file" : "tile-07.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-08.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 480,
+    "width" : 640
   },
   {
     "file" : "tile-09.avif",
-    "height" : 428,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-10.avif",
     "height" : 640,
-    "width" : 360
-  },
-  {
-    "file" : "tile-11.avif",
-    "height" : 640,
-    "width" : 360
-  },
-  {
-    "file" : "tile-12.avif",
-    "height" : 640,
     "width" : 480
   },
   {
+    "file" : "tile-11.avif",
+    "height" : 426,
+    "width" : 640
+  },
+  {
+    "file" : "tile-12.avif",
+    "height" : 426,
+    "width" : 640
+  },
+  {
     "file" : "tile-13.avif",
-    "height" : 640,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-14.avif",
     "height" : 640,
-    "width" : 360
+    "width" : 480
   },
   {
     "file" : "tile-15.avif",
@@ -77,52 +77,52 @@
   {
     "file" : "tile-16.avif",
     "height" : 640,
-    "width" : 360
+    "width" : 480
   },
   {
     "file" : "tile-17.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 480,
+    "width" : 640
   },
   {
     "file" : "tile-18.avif",
     "height" : 640,
-    "width" : 360
+    "width" : 480
   },
   {
     "file" : "tile-19.avif",
-    "height" : 480,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-20.avif",
     "height" : 640,
-    "width" : 360
+    "width" : 512
   },
   {
     "file" : "tile-21.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-22.avif",
-    "height" : 640,
-    "width" : 480
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-23.avif",
-    "height" : 480,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-24.avif",
-    "height" : 480,
-    "width" : 640
+    "height" : 640,
+    "width" : 480
   },
   {
     "file" : "tile-25.avif",
-    "height" : 640,
-    "width" : 480
+    "height" : 480,
+    "width" : 640
   },
   {
     "file" : "tile-26.avif",
@@ -131,38 +131,38 @@
   },
   {
     "file" : "tile-27.avif",
-    "height" : 640,
-    "width" : 480
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-28.avif",
-    "height" : 480,
+    "height" : 426,
     "width" : 640
   },
   {
     "file" : "tile-29.avif",
+    "height" : 640,
+    "width" : 480
+  },
+  {
+    "file" : "tile-30.avif",
     "height" : 480,
     "width" : 640
   },
   {
-    "file" : "tile-30.avif",
-    "height" : 640,
-    "width" : 480
-  },
-  {
     "file" : "tile-31.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-32.avif",
     "height" : 640,
-    "width" : 480
+    "width" : 360
   },
   {
     "file" : "tile-33.avif",
-    "height" : 640,
-    "width" : 480
+    "height" : 426,
+    "width" : 640
   },
   {
     "file" : "tile-34.avif",
@@ -176,13 +176,13 @@
   },
   {
     "file" : "tile-36.avif",
-    "height" : 640,
-    "width" : 360
+    "height" : 480,
+    "width" : 640
   },
   {
     "file" : "tile-37.avif",
-    "height" : 480,
-    "width" : 640
+    "height" : 640,
+    "width" : 480
   },
   {
     "file" : "tile-38.avif",
@@ -191,17 +191,27 @@
   },
   {
     "file" : "tile-39.avif",
-    "height" : 480,
-    "width" : 640
+    "height" : 640,
+    "width" : 360
   },
   {
     "file" : "tile-40.avif",
-    "height" : 360,
+    "height" : 480,
     "width" : 640
   },
   {
     "file" : "tile-41.avif",
     "height" : 640,
     "width" : 480
+  },
+  {
+    "file" : "tile-42.avif",
+    "height" : 426,
+    "width" : 640
+  },
+  {
+    "file" : "tile-43.avif",
+    "height" : 640,
+    "width" : 360
   }
 ]

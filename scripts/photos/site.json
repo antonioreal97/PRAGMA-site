@@ -1,0 +1,27 @@
+{
+  "out": "artifacts/pragma-live-production/src/assets/photos",
+  "quality": 0.5,
+  "jpegQuality": 0.62,
+  "jobs": [
+    { "src": "FOTOS/IMG_8788.JPG", "name": "palco-tenda", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/8C3B91A7-DAB4-4164-830F-59A382D16C8C.jpg", "name": "streaming-mesa", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_1059.JPG", "name": "feira-palco-led", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9949.JPG", "name": "corte-ao-vivo", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_8787.JPG", "name": "operador-noite", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_3674.JPG", "name": "podcast-estudio", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9496.JPG", "name": "show-palco", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9030.JPG", "name": "entrevista-set", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9502.JPG", "name": "camera-fx30", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/B2FF1A4B-169D-468B-9A41-7C1DB0E6048A.jpeg", "name": "tenda-panorama", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_8837.JPG", "name": "camera-palco-externo", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_1060.JPG", "name": "bastidores-drone", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9935.JPG", "name": "bastidores-entrevista", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/4158F768-8E24-4515-B21D-CB3AC0DD6B50.jpeg", "name": "bastidores-grade", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_2403.JPG", "name": "bastidores-intervalo", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9950.JPG", "name": "bastidores-cabine", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9126.JPG", "name": "bastidores-estande", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_8932.JPG", "name": "bastidores-debate", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9492.JPG", "name": "bastidores-luzes", "widths": [], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_3685.JPG", "name": "bastidores-equipe", "widths": [], "jpeg": 1920 }
+  ]
+}

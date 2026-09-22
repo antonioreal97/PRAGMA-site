@@ -40,6 +40,35 @@ func fail(_ message: String) -> Never {
 }
 
 /// Imagem inteira, já com a orientação aplicada nos pixels.
+func ffmpegBin() -> String {
+    for path in ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]
+    where FileManager.default.isExecutableFile(atPath: path) {
+        return path
+    }
+    fail("ffmpeg não encontrado")
+}
+
+/// JPEG comum, já orientado e sem EXIF/GPS. O ImageIO devolve preto
+/// quando o arquivo traz gain map de HDR.
+func normalizeJPEG(_ src: String) -> String {
+    let dst = NSTemporaryDirectory() + "pragma-\(UUID().uuidString).jpg"
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: ffmpegBin())
+    proc.arguments = [
+        "-hide_banner", "-loglevel", "error", "-y", "-i", src,
+        "-map_metadata", "-1", "-q:v", "2", dst,
+    ]
+    let pipe = Pipe()
+    proc.standardError = pipe
+    do { try proc.run() } catch { fail("ffmpeg: \(error)") }
+    proc.waitUntilExit()
+    guard proc.terminationStatus == 0 else {
+        let err = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        fail("ffmpeg falhou em \(src): \(err)")
+    }
+    return dst
+}
+
 func loadOriented(_ path: String) -> CGImage {
     let url = URL(fileURLWithPath: path)
     guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -105,7 +134,9 @@ try? FileManager.default.createDirectory(
     atPath: manifest.out, withIntermediateDirectories: true)
 
 for job in manifest.jobs {
-    var image = loadOriented(job.src)
+    let normalized = normalizeJPEG(job.src)
+    defer { try? FileManager.default.removeItem(atPath: normalized) }
+    var image = loadOriented(normalized)
     if let c = job.crop {
         guard c.count == 4 else { fail("\(job.name): crop precisa de 4 números") }
         let W = Double(image.width), H = Double(image.height)

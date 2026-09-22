@@ -29,6 +29,7 @@ export type SiteSettings = {
 };
 
 export type HomePage = {
+  sectionOrder?: string[];
   hero: {
     eyebrow: string;
     titleLine1: string;
@@ -50,13 +51,6 @@ export type HomePage = {
     image: SanityImage;
     alt: string;
     caption: string;
-  };
-  anatomy: {
-    label: string;
-    title: string;
-    titleAccent?: string;
-    intro: string;
-    layers: { id: string; name: string; note: string }[];
   };
   capabilities: {
     label: string;
@@ -111,6 +105,7 @@ export type HomePage = {
       copy: string;
       wide: { image: SanityImage; caption: string };
       tall?: { image?: SanityImage; caption?: string };
+      stills?: { image?: SanityImage; caption?: string }[];
     }[];
   };
   contact: {

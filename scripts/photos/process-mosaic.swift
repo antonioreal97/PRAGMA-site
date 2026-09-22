@@ -1,12 +1,13 @@
-// Prepara fotos do mosaico da abertura a partir dos *_1_105_c em FOTOS.
+// Prepara fotos do mosaico da abertura a partir de scripts/photos/mosaic.txt.
 //
 // Uso:  swift scripts/photos/process-mosaic.swift
 //
-// Para cada JPEG usável:
-//   1. aplica a orientação EXIF nos pixels;
+// Para cada JPEG da lista:
+//   1. regrava com ffmpeg — o ImageIO do macOS devolve preto em JPEG
+//      com gain map (HDR de iPhone); o ffmpeg lê a imagem base, aplica
+//      a orientação e descarta EXIF/GPS;
 //   2. converte para sRGB;
-//   3. grava AVIF com lado maior 640px, SEM metadados
-//      (nada de EXIF, modelo de câmera ou GPS).
+//   3. grava AVIF com lado maior 640px, SEM metadados.
 //      640px cobre a coluna do mosaico em tela retina; o arquivo
 //      entra no bundle do Vite como fallback, então precisa ser leve.
 
@@ -23,6 +24,34 @@ let avifQuality = 0.45
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data("erro: \(message)\n".utf8))
     exit(1)
+}
+
+func ffmpegBin() -> String {
+    for path in ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]
+    where FileManager.default.isExecutableFile(atPath: path) {
+        return path
+    }
+    fail("ffmpeg não encontrado")
+}
+
+/// JPEG comum, já orientado e sem EXIF. Apaga no fim do processamento.
+func normalizeJPEG(_ src: String) -> String {
+    let dst = NSTemporaryDirectory() + "pragma-\(UUID().uuidString).jpg"
+    let proc = Process()
+    proc.executableURL = URL(fileURLWithPath: ffmpegBin())
+    proc.arguments = [
+        "-hide_banner", "-loglevel", "error", "-y", "-i", src,
+        "-map_metadata", "-1", "-q:v", "3", dst,
+    ]
+    let pipe = Pipe()
+    proc.standardError = pipe
+    do { try proc.run() } catch { fail("ffmpeg: \(error)") }
+    proc.waitUntilExit()
+    guard proc.terminationStatus == 0 else {
+        let err = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        fail("ffmpeg falhou em \(src): \(err)")
+    }
+    return dst
 }
 
 func loadOriented(_ path: String) -> CGImage {
@@ -74,18 +103,21 @@ func write(_ image: CGImage, to path: String) {
     guard CGImageDestinationFinalize(dest) else { fail("falha ao gravar \(path)") }
 }
 
-guard let files = try? FileManager.default.contentsOfDirectory(atPath: sourceDir)
-else { fail("pasta FOTOS não encontrada em \(sourceDir)") }
-
-let sources = files
-    .filter { $0.hasSuffix("_1_105_c.jpeg") }
-    .sorted()
-
-guard !sources.isEmpty else { fail("nenhum *_1_105_c.jpeg em FOTOS") }
+let listPath = "\(root)/scripts/photos/mosaic.txt"
+guard let list = try? String(contentsOfFile: listPath, encoding: .utf8) else {
+    fail("lista não encontrada: \(listPath)")
+}
+let sources = list.split(whereSeparator: \.isNewline).map { String($0).trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && !$0.hasPrefix("#") }
+guard !sources.isEmpty else { fail("scripts/photos/mosaic.txt está vazio") }
+for name in sources {
+    guard FileManager.default.fileExists(atPath: "\(sourceDir)/\(name)") else {
+        fail("foto da lista não está em FOTOS: \(name)")
+    }
+}
 
 try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 if let stale = try? FileManager.default.contentsOfDirectory(atPath: outDir) {
-    for name in stale where name.hasPrefix("tile-") && name.hasSuffix(".jpg") {
+    for name in stale where name.hasPrefix("tile-") && (name.hasSuffix(".jpg") || name.hasSuffix(".avif")) {
         try? FileManager.default.removeItem(atPath: "\(outDir)/\(name)")
     }
 }
@@ -94,7 +126,9 @@ var manifest: [[String: Any]] = []
 
 for (index, name) in sources.enumerated() {
     let src = "\(sourceDir)/\(name)"
-    let image = loadOriented(src)
+    let normalized = normalizeJPEG(src)
+    defer { try? FileManager.default.removeItem(atPath: normalized) }
+    let image = loadOriented(normalized)
     // Encolhe até o lado maior pedido; se já cabe, só regrava em sRGB sem EXIF.
     let target = min(maxSide, max(image.width, image.height))
     let out = render(image, maxSide: target)

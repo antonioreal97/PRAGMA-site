@@ -9,7 +9,7 @@ import {
   RadioTower,
   Users,
 } from "lucide-react";
-import { useEffect, type CSSProperties } from "react";
+import { Fragment, useEffect, type CSSProperties, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,7 +22,6 @@ import { HeroMosaic } from "@/components/site/hero-mosaic";
 import { SinceCounter } from "@/components/site/since-counter";
 import { ContactForm } from "@/components/site/contact-form";
 import { useSiteMotion, useSpotlight } from "@/components/site/motion";
-import { StageLayers } from "@/components/site/stage-layers";
 import { SignalChain } from "@/components/site/signal-chain";
 import { MethodStory, type MethodStep } from "@/components/site/method-story";
 import NotFound from "@/pages/not-found";
@@ -49,6 +48,39 @@ const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   streaming: RadioTower,
   producao: Users,
 };
+
+const DEFAULT_SECTION_ORDER = [
+  "about",
+  "capabilities",
+  "work",
+  "broadcast",
+  "gallery",
+  "method",
+  "contact",
+] as const;
+
+type HomeSectionId = (typeof DEFAULT_SECTION_ORDER)[number];
+
+const isHomeSectionId = (value: string): value is HomeSectionId =>
+  (DEFAULT_SECTION_ORDER as readonly string[]).includes(value);
+
+function orderedHomeSectionIds(sectionOrder?: string[]) {
+  const seen = new Set<HomeSectionId>();
+  const ordered: HomeSectionId[] = [];
+
+  for (const sectionId of sectionOrder ?? []) {
+    if (!isHomeSectionId(sectionId) || seen.has(sectionId)) continue;
+    seen.add(sectionId);
+    ordered.push(sectionId);
+  }
+
+  for (const sectionId of DEFAULT_SECTION_ORDER) {
+    if (seen.has(sectionId)) continue;
+    ordered.push(sectionId);
+  }
+
+  return ordered;
+}
 
 const stagger = (index: number, step = 70): CSSProperties =>
   ({ "--reveal-delay": `${index * step}ms` }) as CSSProperties;
@@ -87,23 +119,53 @@ function requireImage(image: SanityImage | undefined, label: string) {
 function mappedPhoto(image: SanityImage, alt: string, caption: string) {
   const { src, srcSet } = sanityImage(image);
   const { width, height } = imageDimensions(image);
-  return { src, srcSet, width, height, alt, caption };
+  return { src, srcSet, width, height, alt, caption, focus: hotspotFocus(image) };
+}
+
+type MappedPhoto = ReturnType<typeof mappedPhoto>;
+
+const MOODBOARD_SIZES = [
+  "(max-width: 900px) 62vw, 36vw",
+  "(max-width: 900px) 28vw, 16vw",
+  "(max-width: 900px) 28vw, 16vw",
+  "(max-width: 900px) 30vw, 18vw",
+  "(max-width: 900px) 30vw, 16vw",
+  "(max-width: 900px) 30vw, 18vw",
+];
+
+function workMoodboard(feature: MappedPhoto, gallery: MappedPhoto[]) {
+  const field = gallery.filter((photo) => photo.src !== feature.src);
+  if (field.length < 5) return null;
+  return [field[0], field[1], feature, field[2], field[3], field[4]];
+}
+
+function mappedShot(image: SanityImage, caption: string) {
+  return {
+    ...wideImage(image),
+    caption,
+    focus: hotspotFocus(image),
+  };
 }
 
 function mappedStep(step: HomePage["method"]["steps"][number]): MethodStep {
   const wideAsset = requireImage(step.wide?.image, `método ${step.id} wide`);
   const tallAsset = step.tall?.image?.asset ? step.tall.image : undefined;
+  const wide = mappedShot(wideAsset, step.wide.caption);
+  const stills = (step.stills ?? []).flatMap((still) => {
+    if (!still.image?.asset || !still.caption) return [];
+    return [mappedShot(still.image, still.caption)];
+  });
+  if (stills.length !== (step.stills ?? []).length) {
+    throw new Error(`Foto extra incompleta no método ${step.id}.`);
+  }
   return {
     id: step.id,
     num: step.num,
     phase: step.phase,
     title: step.title,
     copy: step.copy,
-    wide: {
-      ...wideImage(wideAsset),
-      caption: step.wide.caption,
-      focus: hotspotFocus(wideAsset),
-    },
+    wide,
+    frames: [wide, ...stills],
     tall:
       tallAsset && step.tall?.caption
         ? {
@@ -121,7 +183,11 @@ function bootPhotoUrls(home: HomePage) {
     home.about.image,
     ...home.work.cards.map((card) => card.image),
     ...home.gallery.photos.map((photo) => photo.image),
-    ...home.method.steps.flatMap((step) => [step.wide?.image, step.tall?.image]),
+    ...home.method.steps.flatMap((step) => [
+      step.wide?.image,
+      step.tall?.image,
+      ...(step.stills ?? []).map((still) => still.image),
+    ]),
   ].filter((image): image is SanityImage => Boolean(image?.asset));
 
   const seen = new Set<string>();
@@ -193,6 +259,227 @@ function HomeLoaded({
   if (!feature) {
     throw new Error("Seção Em campo no Sanity precisa de ao menos um card.");
   }
+  const featureImage = requireImage(feature.image, feature.title);
+  const moodboard = workMoodboard(
+    mappedPhoto(featureImage, feature.alt, feature.title),
+    galleryPhotos,
+  );
+  const contentSections: Record<HomeSectionId, () => ReactNode> = {
+    about: () => (
+      <section className="section intro" id="about" tabIndex={-1}>
+        <div className="wrap intro-layout">
+          <div data-reveal>
+            <div className="section-label">{home.about.label}</div>
+            <h2 className="section-title">
+              <AccentTitle
+                title={home.about.title}
+                accent={home.about.titleAccent}
+              />
+            </h2>
+            <figure className="intro-photo">
+              <div className="frame frame-corners">
+                <img
+                  src={aboutPhoto.src}
+                  srcSet={aboutPhoto.srcSet}
+                  sizes="(max-width: 900px) 92vw, 42vw"
+                  alt={aboutPhoto.alt}
+                  width={aboutPhoto.width}
+                  height={aboutPhoto.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <figcaption className="mono">{home.about.caption}</figcaption>
+            </figure>
+          </div>
+          <div className="intro-copy" data-reveal style={stagger(1, 120)}>
+            {home.about.copy.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            <div className="number-list">
+              {home.about.points.map((copy, index) => (
+                <div className="number-item" key={copy}>
+                  <span className="num">/ 0{index + 1}</span>
+                  <p>{copy}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    ),
+    capabilities: () => (
+      <section className="section capabilities" id="capabilities" tabIndex={-1}>
+        <div className="fx-grid" aria-hidden="true" />
+        <div className="wrap">
+          <div className="cap-head" data-reveal>
+            <div>
+              <div className="section-label">{home.capabilities.label}</div>
+              <h2 className="section-title">
+                <AccentTitle
+                  title={home.capabilities.title}
+                  accent={home.capabilities.titleAccent}
+                  stacked
+                />
+              </h2>
+            </div>
+            <p>{home.capabilities.intro}</p>
+          </div>
+          <div className="cap-grid">
+            {home.capabilities.items.map((item, position) => {
+              const Icon = CAPABILITY_ICONS[item.icon];
+              if (!Icon) {
+                throw new Error(
+                  `Ícone de capacidade desconhecido: "${item.icon}".`,
+                );
+              }
+              return (
+                <article
+                  className="panel cap-card"
+                  key={item.num}
+                  data-reveal
+                  style={stagger(position % 3)}
+                  {...spotlight}
+                  data-testid={`card-capability-${item.num}`}
+                >
+                  <div className="cap-top">
+                    <span className="cap-icon" aria-hidden="true">
+                      <Icon size={22} strokeWidth={1.5} />
+                    </span>
+                    <span className="cap-index" aria-hidden="true">
+                      {item.num}
+                    </span>
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.copy}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    ),
+    work: () => (
+      <section className="section work" id="work" tabIndex={-1}>
+        <div className="wrap">
+          <div data-reveal>
+            <div className="section-label">{home.work.label}</div>
+            <h2 className="section-title">
+              <AccentTitle
+                title={home.work.title}
+                accent={home.work.titleAccent}
+              />
+            </h2>
+          </div>
+          <div className="work-grid">
+            <WorkCard card={feature} featured moodboard={moodboard} />
+            <div className="work-stack">
+              {tiles.map((card, index) => (
+                <WorkCard
+                  key={card.title}
+                  card={card}
+                  delay={index + 1}
+                  spotlight={spotlight}
+                />
+              ))}
+              <p
+                className="work-statement"
+                data-reveal
+                style={stagger(tiles.length + 1, 110)}
+              >
+                {home.work.statementLine1}
+                <br />
+                <span>{home.work.statementLine2}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    ),
+    broadcast: () => (
+      <section
+        className="section signal"
+        id="signal"
+        aria-labelledby="signal-title"
+        tabIndex={-1}
+      >
+        <div className="fx-grid" aria-hidden="true" />
+        <div className="wrap signal-head" data-reveal>
+          <div>
+            <div className="section-label">{home.broadcast.label}</div>
+            <h2 className="section-title" id="signal-title">
+              <AccentTitle
+                title={home.broadcast.title}
+                accent={home.broadcast.titleAccent}
+              />
+            </h2>
+          </div>
+          <p>{home.broadcast.intro}</p>
+        </div>
+        <div className="wrap" data-reveal style={stagger(1, 120)}>
+          <SignalChain stations={home.broadcast.stations} />
+        </div>
+      </section>
+    ),
+    gallery: () => (
+      <section
+        className="section gallery-section"
+        id="bastidores"
+        aria-labelledby="gallery-title"
+        tabIndex={-1}
+      >
+        <div className="wrap" data-reveal>
+          <div className="section-label">{home.gallery.label}</div>
+          <h2 className="section-title" id="gallery-title">
+            <AccentTitle
+              title={home.gallery.title}
+              accent={home.gallery.titleAccent}
+            />
+          </h2>
+        </div>
+        <PhotoGallery photos={galleryPhotos} />
+      </section>
+    ),
+    method: () => (
+      <MethodStory
+        method={{
+          ...home.method,
+          steps: methodSteps,
+        }}
+      />
+    ),
+    contact: () => (
+      <section className="section contact" id="contact" tabIndex={-1}>
+        <div className="wrap contact-layout">
+          <div data-reveal>
+            <div className="eyebrow mono">{home.contact.eyebrow}</div>
+            <h2>
+              {home.contact.title}
+              {home.contact.titleAccent ? (
+                <>
+                  <br />
+                  <span className="accent-gradient">
+                    {home.contact.titleAccent}
+                  </span>
+                </>
+              ) : null}
+            </h2>
+            <p className="contact-note">{home.contact.note}</p>
+            <a
+              className="contact-email text-link"
+              href={`mailto:${settings.email}`}
+            >
+              {settings.email} <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
+          <div data-reveal style={stagger(1, 120)}>
+            <ContactForm email={settings.email} />
+          </div>
+        </div>
+      </section>
+    ),
+  };
+  const orderedSections = orderedHomeSectionIds(home.sectionOrder);
 
   return (
     <div className="pragma-page">
@@ -253,238 +540,9 @@ function HomeLoaded({
           </div>
         </section>
 
-        <section className="section intro" id="about" tabIndex={-1}>
-          <div className="wrap intro-layout">
-            <div data-reveal>
-              <div className="section-label">{home.about.label}</div>
-              <h2 className="section-title">
-                <AccentTitle
-                  title={home.about.title}
-                  accent={home.about.titleAccent}
-                />
-              </h2>
-              <figure className="intro-photo">
-                <div className="frame frame-corners">
-                  <img
-                    src={aboutPhoto.src}
-                    srcSet={aboutPhoto.srcSet}
-                    sizes="(max-width: 900px) 92vw, 42vw"
-                    alt={aboutPhoto.alt}
-                    width={aboutPhoto.width}
-                    height={aboutPhoto.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-                <figcaption className="mono">{home.about.caption}</figcaption>
-              </figure>
-            </div>
-            <div className="intro-copy" data-reveal style={stagger(1, 120)}>
-              {home.about.copy.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-              <div className="number-list">
-                {home.about.points.map((copy, index) => (
-                  <div className="number-item" key={copy}>
-                    <span className="num">/ 0{index + 1}</span>
-                    <p>{copy}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="section anatomy"
-          id="anatomy"
-          aria-labelledby="anatomy-title"
-          tabIndex={-1}
-        >
-          <div className="wrap anatomy-head" data-reveal>
-            <div>
-              <div className="section-label">{home.anatomy.label}</div>
-              <h2 className="section-title" id="anatomy-title">
-                <AccentTitle
-                  title={home.anatomy.title}
-                  accent={home.anatomy.titleAccent}
-                />
-              </h2>
-            </div>
-            <p>{home.anatomy.intro}</p>
-          </div>
-          <div className="wrap" data-reveal style={stagger(1, 120)}>
-            <StageLayers layers={home.anatomy.layers} />
-          </div>
-        </section>
-
-        <section
-          className="section capabilities"
-          id="capabilities"
-          tabIndex={-1}
-        >
-          <div className="fx-grid" aria-hidden="true" />
-          <div className="wrap">
-            <div className="cap-head" data-reveal>
-              <div>
-                <div className="section-label">{home.capabilities.label}</div>
-                <h2 className="section-title">
-                  <AccentTitle
-                    title={home.capabilities.title}
-                    accent={home.capabilities.titleAccent}
-                    stacked
-                  />
-                </h2>
-              </div>
-              <p>{home.capabilities.intro}</p>
-            </div>
-            <div className="cap-grid">
-              {home.capabilities.items.map((item, position) => {
-                const Icon = CAPABILITY_ICONS[item.icon];
-                if (!Icon) {
-                  throw new Error(
-                    `Ícone de capacidade desconhecido: "${item.icon}".`,
-                  );
-                }
-                return (
-                  <article
-                    className="panel cap-card"
-                    key={item.num}
-                    data-reveal
-                    style={stagger(position % 3)}
-                    {...spotlight}
-                    data-testid={`card-capability-${item.num}`}
-                  >
-                    <div className="cap-top">
-                      <span className="cap-icon" aria-hidden="true">
-                        <Icon size={22} strokeWidth={1.5} />
-                      </span>
-                      <span className="cap-index" aria-hidden="true">
-                        {item.num}
-                      </span>
-                    </div>
-                    <h3>{item.title}</h3>
-                    <p>{item.copy}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="section work" id="work" tabIndex={-1}>
-          <div className="wrap">
-            <div data-reveal>
-              <div className="section-label">{home.work.label}</div>
-              <h2 className="section-title">
-                <AccentTitle
-                  title={home.work.title}
-                  accent={home.work.titleAccent}
-                />
-              </h2>
-            </div>
-            <div className="work-grid">
-              <WorkCard card={feature} featured />
-              <div className="work-stack">
-                {tiles.map((card, index) => (
-                  <WorkCard
-                    key={card.title}
-                    card={card}
-                    delay={index + 1}
-                    spotlight={spotlight}
-                  />
-                ))}
-                <p
-                  className="work-statement"
-                  data-reveal
-                  style={stagger(tiles.length + 1, 110)}
-                >
-                  {home.work.statementLine1}
-                  <br />
-                  <span>{home.work.statementLine2}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="section signal"
-          id="signal"
-          aria-labelledby="signal-title"
-          tabIndex={-1}
-        >
-          <div className="fx-grid" aria-hidden="true" />
-          <div className="wrap signal-head" data-reveal>
-            <div>
-              <div className="section-label">{home.broadcast.label}</div>
-              <h2 className="section-title" id="signal-title">
-                <AccentTitle
-                  title={home.broadcast.title}
-                  accent={home.broadcast.titleAccent}
-                />
-              </h2>
-            </div>
-            <p>{home.broadcast.intro}</p>
-          </div>
-          <div className="wrap" data-reveal style={stagger(1, 120)}>
-            <SignalChain stations={home.broadcast.stations} />
-          </div>
-        </section>
-
-        <section
-          className="section gallery-section"
-          id="bastidores"
-          aria-labelledby="gallery-title"
-          tabIndex={-1}
-        >
-          <div className="wrap" data-reveal>
-            <div className="section-label">{home.gallery.label}</div>
-            <h2 className="section-title" id="gallery-title">
-              <AccentTitle
-                title={home.gallery.title}
-                accent={home.gallery.titleAccent}
-              />
-            </h2>
-          </div>
-          <PhotoGallery photos={galleryPhotos} />
-        </section>
-
-        <MethodStory
-          method={{
-            ...home.method,
-            steps: methodSteps,
-          }}
-        />
-
-        <section className="section contact" id="contact" tabIndex={-1}>
-          <div className="wrap contact-layout">
-            <div data-reveal>
-              <div className="eyebrow mono">{home.contact.eyebrow}</div>
-              <h2>
-                {home.contact.title}
-                {home.contact.titleAccent ? (
-                  <>
-                    <br />
-                    <span className="accent-gradient">
-                      {home.contact.titleAccent}
-                    </span>
-                  </>
-                ) : null}
-              </h2>
-              <p className="contact-note">{home.contact.note}</p>
-              <a
-                className="contact-email text-link"
-                href={`mailto:${settings.email}`}
-              >
-                {settings.email} <ArrowUpRight size={18} aria-hidden="true" />
-              </a>
-            </div>
-            <div data-reveal style={stagger(1, 120)}>
-              <ContactForm email={settings.email} />
-            </div>
-          </div>
-        </section>
+        {orderedSections.map((sectionId) => (
+          <Fragment key={sectionId}>{contentSections[sectionId]()}</Fragment>
+        ))}
       </main>
       <footer className="footer">
         <div className="wrap footer-inner">
@@ -510,11 +568,13 @@ function HomeLoaded({
 function WorkCard({
   card,
   featured,
+  moodboard,
   delay = 0,
   spotlight,
 }: {
   card: HomePage["work"]["cards"][number];
   featured?: boolean;
+  moodboard?: MappedPhoto[] | null;
   delay?: number;
   spotlight?: ReturnType<typeof useSpotlight>;
 }) {
@@ -528,16 +588,36 @@ function WorkCard({
         data-testid={card.testId ?? "card-project-feature"}
       >
         <div className="frame frame-corners work-media">
-          <img
-            src={photo.src}
-            srcSet={photo.srcSet}
-            sizes="(max-width: 900px) 92vw, 56vw"
-            alt={photo.alt}
-            width={photo.width}
-            height={photo.height}
-            loading="lazy"
-            decoding="async"
-          />
+          {moodboard ? (
+            <div className="work-moodboard">
+              {moodboard.map((shot, index) => (
+                <div className="work-moodboard-cell" key={shot.src}>
+                  <img
+                    src={shot.src}
+                    srcSet={shot.srcSet}
+                    sizes={MOODBOARD_SIZES[index]}
+                    alt={shot.alt}
+                    width={shot.width}
+                    height={shot.height}
+                    style={{ objectPosition: shot.focus }}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <img
+              src={photo.src}
+              srcSet={photo.srcSet}
+              sizes="(max-width: 900px) 92vw, 56vw"
+              alt={photo.alt}
+              width={photo.width}
+              height={photo.height}
+              loading="lazy"
+              decoding="async"
+            />
+          )}
         </div>
         <div className="work-bottom">
           {card.kicker ? <p className="section-label">{card.kicker}</p> : null}

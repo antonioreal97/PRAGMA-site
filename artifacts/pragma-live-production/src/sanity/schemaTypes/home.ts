@@ -30,6 +30,16 @@ const captionedImage = [
   }),
 ];
 
+const sectionOrderOptions = [
+  { title: "O que fazemos", value: "about" },
+  { title: "Capacidades", value: "capabilities" },
+  { title: "Em campo", value: "work" },
+  { title: "Broadcast", value: "broadcast" },
+  { title: "Bastidores", value: "gallery" },
+  { title: "Método", value: "method" },
+  { title: "Contato", value: "contact" },
+];
+
 export const homeType = defineType({
   name: "home",
   title: "Página inicial",
@@ -41,6 +51,7 @@ export const homeType = defineType({
     },
   },
   groups: [
+    { name: "layout", title: "Ordem das seções" },
     { name: "hero", title: "Abertura" },
     { name: "about", title: "O que fazemos" },
     { name: "anatomy", title: "Anatomia" },
@@ -52,6 +63,38 @@ export const homeType = defineType({
     { name: "contact", title: "Contato" },
   ],
   fields: [
+    defineField({
+      name: "sectionOrder",
+      title: "Ordem das seções",
+      description:
+        "Arraste para reorganizar as seções abaixo da abertura. A abertura permanece sempre no topo.",
+      type: "array",
+      group: "layout",
+      of: [
+        defineArrayMember({
+          type: "string",
+          options: {
+            list: sectionOrderOptions,
+            layout: "dropdown",
+          },
+        }),
+      ],
+      initialValue: sectionOrderOptions.map((section) => section.value),
+      validation: (rule) =>
+        rule
+          .unique()
+          .custom((value) => {
+            if (!Array.isArray(value) || !value.length) return true;
+            const validValues = new Set(
+              sectionOrderOptions.map((section) => section.value),
+            );
+            const unknown = value.find(
+              (item) => typeof item !== "string" || !validValues.has(item),
+            );
+            if (unknown) return `Seção desconhecida: ${unknown}`;
+            return true;
+          }),
+    }),
     defineField({
       name: "hero",
       title: "Abertura",
@@ -207,10 +250,10 @@ export const homeType = defineType({
                   type: "string",
                   options: {
                     list: [
-                      { title: "Imagem", value: "imagem" },
-                      { title: "Luz", value: "luz" },
-                      { title: "Som", value: "som" },
-                      { title: "Infraestrutura", value: "infra" },
+                      { title: "Captação", value: "imagem" },
+                      { title: "Direção", value: "luz" },
+                      { title: "Mix", value: "som" },
+                      { title: "Streaming", value: "infra" },
                     ],
                     canvasApp: { exclude: true },
                   },
@@ -585,6 +628,36 @@ export const homeType = defineType({
                       name: "caption",
                       title: "Legenda",
                       type: "string",
+                    }),
+                  ],
+                }),
+                defineField({
+                  name: "stills",
+                  title: "Mais fotos",
+                  description:
+                    "Entram depois da foto deitada, enquanto a etapa é lida.",
+                  type: "array",
+                  of: [
+                    defineArrayMember({
+                      type: "object",
+                      fields: [
+                        defineField({
+                          name: "image",
+                          title: "Imagem",
+                          type: "image",
+                          options: { hotspot: true },
+                          validation: (rule) => rule.required(),
+                        }),
+                        defineField({
+                          name: "caption",
+                          title: "Legenda",
+                          type: "string",
+                          validation: (rule) => rule.required(),
+                        }),
+                      ],
+                      preview: {
+                        select: { title: "caption", media: "image" },
+                      },
                     }),
                   ],
                 }),

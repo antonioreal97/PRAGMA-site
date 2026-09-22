@@ -24,6 +24,7 @@ export type MethodStep = {
   title: string;
   copy: string;
   wide: MethodShot;
+  frames: MethodShot[];
   tall?: MethodShot;
 };
 
@@ -36,25 +37,66 @@ export type MethodContent = {
   steps: MethodStep[];
 };
 
-function Photo({ step }: { step: MethodStep }) {
+function ShotImage({
+  shot,
+  tall,
+}: {
+  shot: MethodShot;
+  tall?: MethodShot;
+}) {
+  const img = (
+    <img
+      src={shot.src}
+      srcSet={shot.srcSet}
+      sizes="100vw"
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+  );
+  if (!tall) return img;
   return (
     <picture>
-      {step.tall && (
-        <source
-          media={PORTRAIT}
-          srcSet={step.tall.srcSet}
-          sizes="160vw"
-        />
-      )}
-      <img
-        src={step.wide.src}
-        srcSet={step.wide.srcSet}
-        sizes="100vw"
-        alt=""
-        loading="lazy"
-        decoding="async"
-      />
+      <source media={PORTRAIT} srcSet={tall.srcSet} sizes="160vw" />
+      {img}
     </picture>
+  );
+}
+
+function Frames({ step }: { step: MethodStep }) {
+  return step.frames.map((shot, slot) => (
+    <div
+      key={`${step.id}-${slot}`}
+      className="method-shot"
+      data-lead={slot === 0 || undefined}
+      style={
+        {
+          "--slot": slot,
+          "--frames": step.frames.length,
+          "--focus": shot.focus,
+          "--focus-tall": (slot === 0 ? step.tall ?? shot : shot).focus,
+        } as CSSProperties
+      }
+    >
+      <ShotImage shot={shot} tall={slot === 0 ? step.tall : undefined} />
+    </div>
+  ));
+}
+
+function StepCaption({ step, slot }: { step: MethodStep; slot: number }) {
+  const shot = step.frames[slot] ?? step.wide;
+  if (slot > 0) {
+    return <span className="caption-wide caption-tall">{shot.caption}</span>;
+  }
+  return (
+    <>
+      <span
+        className={step.tall ? "caption-wide" : "caption-wide caption-tall"}
+      >
+        {step.wide.caption}
+      </span>
+      {step.tall && <span className="caption-tall">{step.tall.caption}</span>}
+    </>
   );
 }
 
@@ -66,7 +108,10 @@ export function MethodStory({ method }: { method: MethodContent }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
   const [active, setActive] = useState(-1);
+  const [still, setStill] = useState(0);
   const [reached, setReached] = useState(1);
 
   useEffect(() => {
@@ -75,6 +120,7 @@ export function MethodStory({ method }: { method: MethodContent }) {
     if (!section || !stage) return;
     let frame = 0;
     let current = -1;
+    let currentStill = 0;
 
     const measure = () => {
       frame = 0;
@@ -91,14 +137,21 @@ export function MethodStory({ method }: { method: MethodContent }) {
           local = Math.min(1, offset / Math.max(1, block.height - box.height));
         }
       });
+      const count = stepsRef.current[next]?.frames.length ?? 1;
+      const slot =
+        next < 0 || count <= 1
+          ? 0
+          : Math.min(count - 1, Math.round(local * (count - 1)));
       stage.style.setProperty("--local", local.toFixed(4));
       stage.style.setProperty(
         "--progress",
-        next < 0 ? "0" : ((next + local) / steps.length).toFixed(4),
+        next < 0 ? "0" : ((next + local) / stepsRef.current.length).toFixed(4),
       );
-      if (next !== current) {
+      if (next !== current || slot !== currentStill) {
         current = next;
+        currentStill = slot;
         setActive(next);
+        setStill(slot);
         setReached((far) => Math.max(far, next + 1));
       }
     };
@@ -172,7 +225,7 @@ export function MethodStory({ method }: { method: MethodContent }) {
                 } as CSSProperties
               }
             >
-              {index <= reached && <Photo step={step} />}
+              {index <= reached && <Frames step={step} />}
             </figure>
           ))}
         </div>
@@ -191,6 +244,21 @@ export function MethodStory({ method }: { method: MethodContent }) {
             {pad(shown + 1)} / {pad(steps.length)}
           </p>
         </div>
+        {current.frames.length > 1 && (
+          <ol className="method-strip" aria-hidden="true">
+            {current.frames.map((shot, index) => (
+              <li key={`${current.id}-${index}`} data-on={index === still || undefined}>
+                <img
+                  src={shot.src}
+                  srcSet={shot.srcSet}
+                  sizes="92px"
+                  alt=""
+                  decoding="async"
+                />
+              </li>
+            ))}
+          </ol>
+        )}
         <nav className="method-rail" aria-label="Etapas do método">
           <ol>
             {steps.map((step, index) => (
@@ -261,16 +329,10 @@ export function MethodStory({ method }: { method: MethodContent }) {
                   <p className="method-card-copy">{step.copy}</p>
                   <p className="method-card-caption mono">
                     <Camera size={13} aria-hidden="true" />
-                    <span
-                      className={
-                        step.tall ? "caption-wide" : "caption-wide caption-tall"
-                      }
-                    >
-                      {step.wide.caption}
-                    </span>
-                    {step.tall && (
-                      <span className="caption-tall">{step.tall.caption}</span>
-                    )}
+                    <StepCaption
+                      step={step}
+                      slot={index === shown ? still : 0}
+                    />
                   </p>
                 </article>
               </div>

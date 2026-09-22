@@ -3,19 +3,19 @@
   "quality": 0.5,
   "jpegQuality": 0.62,
   "jobs": [
-    { "src": "FOTOS/9809DA78-C261-4592-99E3-64E3E28B30A8.jpg", "name": "escutar-wide", "widths": [1600, 2560], "jpeg": 1920 },
-    { "src": "FOTOS/IMG_3085.JPG", "name": "escutar-tall", "widths": [960, 1440], "jpeg": 1080 },
+    { "src": "FOTOS/0F4841B5-F7F2-4363-87D0-8FE18C7FD00A.JPEG", "name": "escutar-wide", "widths": [1600, 2560], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_0210.jpg", "name": "escutar-tall", "widths": [960, 1440], "jpeg": 1080 },
 
-    { "src": "FOTOS/IMG_3475.JPG", "name": "desenhar-wide", "widths": [1600, 2560], "jpeg": 1920, "crop": [0, 0.07, 1, 0.47] },
-    { "src": "FOTOS/IMG_3475.JPG", "name": "desenhar-tall", "widths": [960, 1440], "jpeg": 1080 },
+    { "src": "FOTOS/IMG_1177.JPG", "name": "desenhar-wide", "widths": [1600, 2560], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9653.JPG", "name": "desenhar-tall", "widths": [960, 1440], "jpeg": 1080 },
 
-    { "src": "FOTOS/IMG_4285.JPG", "name": "preparar-wide", "widths": [1600, 2560], "jpeg": 1920 },
-    { "src": "FOTOS/IMG_4283.JPG", "name": "preparar-tall", "widths": [960, 1440], "jpeg": 1080 },
+    { "src": "FOTOS/IMG_5024.JPG", "name": "preparar-wide", "widths": [1600, 2560], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_9648.JPG", "name": "preparar-tall", "widths": [960, 1440], "jpeg": 1080 },
 
-    { "src": "FOTOS/IMG_1612.JPG", "name": "executar-wide", "widths": [1600, 2560], "jpeg": 1920 },
-    { "src": "FOTOS/14DE97F6-31E1-487D-BAB9-FDCAC6F3B632.jpg", "name": "executar-tall", "widths": [960, 1440], "jpeg": 1080 },
+    { "src": "FOTOS/IMG_0211.jpg", "name": "executar-wide", "widths": [1600, 2560], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_8902.JPG", "name": "executar-tall", "widths": [960, 1440], "jpeg": 1080 },
 
-    { "src": "FOTOS/68E03550-ACB1-4F97-9701-D963EF8C8744.jpg", "name": "entregar-wide", "widths": [1600, 2560], "jpeg": 1920 },
-    { "src": "FOTOS/IMG_4483.JPG", "name": "entregar-tall", "widths": [960, 1440], "jpeg": 1080 }
+    { "src": "FOTOS/IMG_9492.JPG", "name": "entregar-wide", "widths": [1600, 2560], "jpeg": 1920 },
+    { "src": "FOTOS/IMG_8719.JPG", "name": "entregar-tall", "widths": [960, 1440], "jpeg": 1080 }
   ]
 }
