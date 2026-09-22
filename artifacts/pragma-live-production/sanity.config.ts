@@ -1,5 +1,6 @@
 import { visionTool } from "@sanity/vision";
-import { defineConfig } from "sanity";
+import { defaultTheme, defineConfig } from "sanity";
+import "./src/assets/fonts/fonts.css";
 import {
   defineDocuments,
   defineLocations,
@@ -16,6 +17,8 @@ import { schemaTypes } from "./src/sanity/schemaTypes";
 import { structure } from "./src/sanity/structure";
 
 const { projectId, dataset } = getSanityEnv();
+const sans = '"Montserrat", system-ui, sans-serif';
+const { fonts } = defaultTheme;
 
 export default defineConfig({
   name: "pragma",
@@ -23,6 +26,14 @@ export default defineConfig({
   projectId,
   dataset,
   basePath: getStudioBasePath(),
+  theme: {
+    fonts: {
+      ...fonts,
+      heading: { ...fonts.heading, family: sans },
+      label: { ...fonts.label, family: sans },
+      text: { ...fonts.text, family: sans },
+    },
+  },
   apps: {
     canvas: {
       enabled: true,
