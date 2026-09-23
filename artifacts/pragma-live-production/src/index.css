@@ -599,7 +599,7 @@ html.motion-ok [data-reveal].is-in {
   inset: -8% 0;
   z-index: 0;
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   opacity: 0.72;
 }
@@ -2279,9 +2279,9 @@ html.motion-ok .method-cue svg {
     padding-block: calc(var(--header-h) + 44px) 124px;
   }
   .hero-mosaic-wall {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .hero-mosaic-col:nth-child(n + 7) {
+  .hero-mosaic-col:nth-child(n + 4) {
     display: none;
   }
   .hero-scrim {
@@ -2324,10 +2324,10 @@ html.motion-ok .method-cue svg {
     padding-block: calc(var(--header-h) + 30px) 120px;
   }
   .hero-mosaic-wall {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     opacity: 0.88;
   }
-  .hero-mosaic-col:nth-child(n + 5) {
+  .hero-mosaic-col:nth-child(n + 3) {
     display: none;
   }
   .hero-scrim {

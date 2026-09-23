@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import manifest from "@/assets/mosaic/manifest.json";
 
 const modules = import.meta.glob("@/assets/mosaic/tile-*.avif", {
@@ -23,40 +23,8 @@ const LOCAL_TILES: MosaicTile[] = manifest.map((entry) => {
   return { src: match[1], width: entry.width, height: entry.height };
 });
 
-const COLUMN_COUNT = 10;
-const COLUMN_DURATIONS = [52, 64, 48, 70, 56, 60, 44, 74, 58, 66];
-const TILE_GAP = 6;
-
-function visibleColumnCount(width: number) {
-  if (width <= 600) return 4;
-  if (width <= 900) return 6;
-  return COLUMN_COUNT;
-}
-
-function fillEstimate() {
-  const cols = visibleColumnCount(window.innerWidth);
-  return {
-    colWidth: window.innerWidth / cols,
-    target: window.innerHeight * 1.35,
-  };
-}
-
-/** Repete a sequência da coluna até uma faixa cobrir a altura visível. */
-function repeatToFill(tiles: MosaicTile[], colWidth: number, target: number) {
-  if (tiles.length === 0 || colWidth <= 0 || target <= 0) return tiles;
-  const filled: MosaicTile[] = [];
-  let height = 0;
-  let loops = 0;
-  while (height < target && loops < 40) {
-    for (const tile of tiles) {
-      filled.push(tile);
-      height += colWidth * (tile.height / tile.width) + TILE_GAP;
-      if (height >= target) break;
-    }
-    loops += 1;
-  }
-  return filled;
-}
+const COLUMN_COUNT = 5;
+const COLUMN_DURATIONS = [52, 64, 48, 70, 56];
 
 function splitColumns(tiles: MosaicTile[], count: number): MosaicTile[][] {
   const columns: MosaicTile[][] = Array.from({ length: count }, () => []);
@@ -91,7 +59,7 @@ function MosaicStrip({
           <img
             src={tile.src}
             srcSet={tile.srcSet}
-            sizes="(max-width: 600px) 25vw, (max-width: 900px) 17vw, 10vw"
+            sizes="(max-width: 600px) 50vw, (max-width: 900px) 33vw, 20vw"
             alt=""
             width={tile.width}
             height={tile.height}
@@ -141,11 +109,10 @@ function MosaicColumn({
  */
 export function HeroMosaic({ tiles }: { tiles?: MosaicTile[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [budget, setBudget] = useState(fillEstimate);
   const columns = splitColumns(
     tiles && tiles.length > 0 ? tiles : LOCAL_TILES,
     COLUMN_COUNT,
-  ).map((column) => repeatToFill(column, budget.colWidth, budget.target));
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -174,33 +141,6 @@ export function HeroMosaic({ tiles }: { tiles?: MosaicTile[] }) {
     };
   }, []);
 
-  useEffect(() => {
-    const wall = rootRef.current?.querySelector(".hero-mosaic-wall");
-    if (!wall) return;
-
-    const measure = () => {
-      const sample = [...wall.querySelectorAll(".hero-mosaic-col")].find(
-        (col) => getComputedStyle(col).display !== "none",
-      );
-      if (!sample) return;
-      const rect = sample.getBoundingClientRect();
-      setBudget((prev) => {
-        if (
-          Math.abs(prev.colWidth - rect.width) < 1 &&
-          Math.abs(prev.target - rect.height) < 1
-        ) {
-          return prev;
-        }
-        return { colWidth: rect.width, target: rect.height };
-      });
-    };
-
-    const resizeObserver = new ResizeObserver(measure);
-    resizeObserver.observe(wall);
-    measure();
-    return () => resizeObserver.disconnect();
-  }, []);
-
   return (
     <div className="hero-mosaic" aria-hidden="true" ref={rootRef}>
       <div className="hero-mosaic-wall">
@@ -210,7 +150,7 @@ export function HeroMosaic({ tiles }: { tiles?: MosaicTile[] }) {
             tiles={columnTiles}
             duration={COLUMN_DURATIONS[index] ?? 60}
             reverse={index % 2 === 1}
-            eager={index < 6}
+            eager={index < 3}
           />
         ))}
       </div>
