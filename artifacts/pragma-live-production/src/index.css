@@ -723,19 +723,6 @@ html.motion-ok .hero-beam {
 .since-slash {
   opacity: 0.45;
 }
-.since-count {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.7em;
-}
-.since-num {
-  display: inline-block;
-  min-width: 2ch;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--paper);
-  text-align: right;
-}
 .live-dot {
   position: relative;
   flex-shrink: 0;

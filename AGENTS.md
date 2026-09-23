@@ -5,7 +5,7 @@
 - Ao subir o dev server, confirmar que a página servida é o site PRAGMA — outros apps do monorepo podem ocupar a mesma porta e parecer “o site errado”.
 - Tipografia principal: Montserrat (self-hosted); DM Mono só em metadados, eyebrows e labels.
 - Preferência visual na abertura: mosaico cinematográfico moderno (referência SpaceX), com tiles densos (metade do tamanho para caber mais fotos); fotos editáveis no Sanity, com origem em `FOTOS/` e fallback local comprimido.
-- Intro/gate da página: só após movimento do mouse; círculo com logo (`public/favicon.svg`) e flash de fotos atrás dela (~2s); véu revela a página ao redor do círculo (sem véu nas fotos do flash); contagem do eyebrow do hero só depois do loading.
+- Intro/gate da página: só após movimento do mouse; círculo com logo (`public/favicon.svg`) e flash de fotos atrás dela (~2s); véu revela a página ao redor do círculo (sem véu nas fotos do flash).
 - Ao selecionar fotos de `FOTOS/` para o site, evitar duplicatas óbvias (cópias `(1)`, rajadas do mesmo clique).
 
 ## Learned Workspace Facts
@@ -21,4 +21,4 @@
 - Leitura pública do Sanity no site não exige `SANITY_API_TOKEN`; scripts `seed` / `seed:mosaic` precisam do token ou de `sanity exec --with-user-token`.
 - Fotos-fonte ficam em `FOTOS/`; tiles locais (fallback do build) em `artifacts/pragma-live-production/src/assets/mosaic/` como AVIF leves. Processar com `swift scripts/photos/process-mosaic.swift` (JPEG HDR/gain map passam por ffmpeg antes do AVIF, senão saem pretos no macOS); popular o CMS com `pnpm --filter @workspace/pragma-live-production seed:mosaic`.
 - No `dist` do Vite entram sobretudo os AVIF do mosaico; JPEG grandes de galeria/método/about vêm do CDN Sanity em runtime, não do bundle.
-- Âncora histórica da marca: 6 de junho de 2016 (contador anos/meses/dias no eyebrow do hero).
+- Âncora histórica da marca no eyebrow do hero: texto estático “desde 2016” (sem contador de anos/meses/dias).
