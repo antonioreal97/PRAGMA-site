@@ -9,6 +9,7 @@ const image = `
 
 export const homePageQuery = `{
   "home": *[_id == "home"][0]{
+    sections[]{ id, name },
     sectionOrder,
     hero{
       eyebrow,

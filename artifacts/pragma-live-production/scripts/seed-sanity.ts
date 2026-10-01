@@ -204,6 +204,15 @@ async function seed() {
   await client.createOrReplace({
     _id: "home",
     _type: "home",
+    sections: [
+      { _key: "about", _type: "object", id: "about", name: "O que fazemos" },
+      { _key: "capabilities", _type: "object", id: "capabilities", name: "Soluções" },
+      { _key: "work", _type: "object", id: "work", name: "Em campo" },
+      { _key: "broadcast", _type: "object", id: "broadcast", name: "Broadcast" },
+      { _key: "gallery", _type: "object", id: "gallery", name: "Bastidores" },
+      { _key: "method", _type: "object", id: "method", name: "Método" },
+      { _key: "contact", _type: "object", id: "contact", name: "Contato" },
+    ],
     sectionOrder: [
       "about",
       "capabilities",

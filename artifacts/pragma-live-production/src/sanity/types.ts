@@ -29,6 +29,7 @@ export type SiteSettings = {
 };
 
 export type HomePage = {
+  sections?: { id: string; name: string }[];
   sectionOrder?: string[];
   hero: {
     eyebrow: string;

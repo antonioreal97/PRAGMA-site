@@ -44,6 +44,8 @@ import {
 import type { HomePage, SanityImage, SiteSettings } from "@/sanity/types";
 import { useHomePage } from "@/sanity/use-home-page";
 import { SanityVisualEditing } from "@/sanity/visual-editing";
+import { resolveHomeSections, SECTION_ANCHORS } from "@/sanity/section-layout";
+import type { HomeSectionId } from "@/sanity/section-layout";
 
 const queryClient = new QueryClient();
 
@@ -55,39 +57,6 @@ const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   streaming: RadioTower,
   producao: Users,
 };
-
-const DEFAULT_SECTION_ORDER = [
-  "about",
-  "capabilities",
-  "work",
-  "broadcast",
-  "gallery",
-  "method",
-  "contact",
-] as const;
-
-type HomeSectionId = (typeof DEFAULT_SECTION_ORDER)[number];
-
-const isHomeSectionId = (value: string): value is HomeSectionId =>
-  (DEFAULT_SECTION_ORDER as readonly string[]).includes(value);
-
-function orderedHomeSectionIds(sectionOrder?: string[]) {
-  const seen = new Set<HomeSectionId>();
-  const ordered: HomeSectionId[] = [];
-
-  for (const sectionId of sectionOrder ?? []) {
-    if (!isHomeSectionId(sectionId) || seen.has(sectionId)) continue;
-    seen.add(sectionId);
-    ordered.push(sectionId);
-  }
-
-  for (const sectionId of DEFAULT_SECTION_ORDER) {
-    if (seen.has(sectionId)) continue;
-    ordered.push(sectionId);
-  }
-
-  return ordered;
-}
 
 const stagger = (index: number, step = 70): CSSProperties =>
   ({ "--reveal-delay": `${index * step}ms` }) as CSSProperties;
@@ -378,6 +347,19 @@ function HomeLoaded({
 }) {
   useSiteMotion();
   const spotlight = useSpotlight();
+  const visibleSections = resolveHomeSections(home.sections, home.sectionOrder);
+  const sectionNames = Object.fromEntries(
+    visibleSections.map(({ id, name }) => [id, name]),
+  ) as Partial<Record<HomeSectionId, string>>;
+  const visibleAnchors = new Set(visibleSections.map(({ id }) => SECTION_ANCHORS[id]));
+  const navLinks = settings.nav
+    .filter(({ id }) => visibleAnchors.has(id))
+    .map((link) => {
+      const section = visibleSections.find(({ id }) => SECTION_ANCHORS[id] === link.id);
+      return { ...link, label: section?.name || link.label };
+    });
+  const showHeroLink = (href: string) =>
+    !href.startsWith("#") || href === "#top" || visibleAnchors.has(href.slice(1));
 
   useEffect(() => {
     document.title = settings.seoTitle;
@@ -416,7 +398,7 @@ function HomeLoaded({
       <section className="section intro" id="about" tabIndex={-1}>
         <div className="wrap intro-layout">
           <div data-reveal>
-            <div className="section-label">{home.about.label}</div>
+            <div className="section-label">{sectionNames.about || home.about.label}</div>
             <h2 className="section-title">
               <AccentTitle
                 title={home.about.title}
@@ -461,7 +443,7 @@ function HomeLoaded({
         <div className="wrap">
           <div className="cap-head" data-reveal>
             <div>
-              <div className="section-label">{home.capabilities.label}</div>
+              <div className="section-label">{sectionNames.capabilities || home.capabilities.label}</div>
               <h2 className="section-title">
                 <AccentTitle
                   title={home.capabilities.title}
@@ -510,7 +492,7 @@ function HomeLoaded({
       <section className="section work" id="work" tabIndex={-1}>
         <div className="wrap">
           <div data-reveal>
-            <div className="section-label">{home.work.label}</div>
+            <div className="section-label">{sectionNames.work || home.work.label}</div>
             <h2 className="section-title">
               <AccentTitle
                 title={home.work.title}
@@ -553,7 +535,7 @@ function HomeLoaded({
         <div className="fx-grid" aria-hidden="true" />
         <div className="wrap signal-head" data-reveal>
           <div>
-            <div className="section-label">{home.broadcast.label}</div>
+            <div className="section-label">{sectionNames.broadcast || home.broadcast.label}</div>
             <h2 className="section-title" id="signal-title">
               <AccentTitle
                 title={home.broadcast.title}
@@ -576,7 +558,7 @@ function HomeLoaded({
         tabIndex={-1}
       >
         <div className="wrap" data-reveal>
-          <div className="section-label">{home.gallery.label}</div>
+          <div className="section-label">{sectionNames.gallery || home.gallery.label}</div>
           <h2 className="section-title" id="gallery-title">
             <AccentTitle
               title={home.gallery.title}
@@ -591,6 +573,7 @@ function HomeLoaded({
       <MethodStory
         method={{
           ...home.method,
+          label: sectionNames.method || home.method.label,
           steps: methodSteps,
         }}
       />
@@ -599,7 +582,7 @@ function HomeLoaded({
       <section className="section contact" id="contact" tabIndex={-1}>
         <div className="wrap contact-layout">
           <div data-reveal>
-            <div className="eyebrow mono">{home.contact.eyebrow}</div>
+            <div className="eyebrow mono">{sectionNames.contact || home.contact.eyebrow}</div>
             <h2>
               {home.contact.title}
               {home.contact.titleAccent ? (
@@ -626,14 +609,12 @@ function HomeLoaded({
       </section>
     ),
   };
-  const orderedSections = orderedHomeSectionIds(home.sectionOrder);
-
   return (
     <div className="pragma-page">
       <a className="skip-link" href="#top">
         Pular para o conteúdo
       </a>
-      <Header links={settings.nav} />
+      <Header links={navLinks} />
       <main id="top" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <HeroMosaic tiles={mosaicTiles} />
@@ -666,16 +647,20 @@ function HomeLoaded({
               </h1>
               <p className="hero-copy">{home.hero.copy}</p>
               <div className="hero-actions">
-                <Button asChild size="lg">
-                  <a href={home.hero.primaryCtaHref} data-testid="link-hero-contact">
-                    {home.hero.primaryCtaLabel}{" "}
-                    <ArrowUpRight aria-hidden="true" />
+                {showHeroLink(home.hero.primaryCtaHref) ? (
+                  <Button asChild size="lg">
+                    <a href={home.hero.primaryCtaHref} data-testid="link-hero-contact">
+                      {home.hero.primaryCtaLabel}{" "}
+                      <ArrowUpRight aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : null}
+                {showHeroLink(home.hero.secondaryCtaHref) ? (
+                  <a className="text-link" href={home.hero.secondaryCtaHref}>
+                    {home.hero.secondaryCtaLabel}{" "}
+                    <ArrowUpRight size={16} aria-hidden="true" />
                   </a>
-                </Button>
-                <a className="text-link" href={home.hero.secondaryCtaHref}>
-                  {home.hero.secondaryCtaLabel}{" "}
-                  <ArrowUpRight size={16} aria-hidden="true" />
-                </a>
+                ) : null}
               </div>
             </div>
           </div>
@@ -693,8 +678,8 @@ function HomeLoaded({
           </div>
         </section>
 
-        {orderedSections.map((sectionId) => (
-          <Fragment key={sectionId}>{contentSections[sectionId]()}</Fragment>
+        {visibleSections.map(({ id }) => (
+          <Fragment key={id}>{contentSections[id]()}</Fragment>
         ))}
       </main>
       <footer className="footer">

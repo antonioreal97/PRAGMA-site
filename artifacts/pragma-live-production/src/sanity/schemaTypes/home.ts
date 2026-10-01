@@ -64,12 +64,63 @@ export const homeType = defineType({
   ],
   fields: [
     defineField({
+      name: "sections",
+      title: "Seções do site",
+      description:
+        "Arraste para mudar a ordem. Para retirar uma seção do site, exclua o item desta lista e publique. Abra um item para mudar o nome exibido na seção. A abertura permanece sempre no topo.",
+      type: "array",
+      group: "layout",
+      of: [
+        defineArrayMember({
+          type: "object",
+          fields: [
+            defineField({
+              name: "id",
+              title: "Seção",
+              type: "string",
+              options: { list: sectionOrderOptions, layout: "dropdown" },
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "name",
+              title: "Nome exibido no site",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+          ],
+          preview: {
+            select: { title: "name", subtitle: "id" },
+          },
+        }),
+      ],
+      initialValue: sectionOrderOptions.map((section) => ({
+        _key: section.value,
+        id: section.value,
+        name: section.title,
+      })),
+      validation: (rule) =>
+        rule.custom((value) => {
+          if (!Array.isArray(value)) return true;
+          const validIds = new Set(sectionOrderOptions.map((section) => section.value));
+          const seen = new Set<string>();
+          for (const section of value as { id?: unknown }[]) {
+            if (!section || typeof section.id !== "string" || !validIds.has(section.id)) {
+              return "Selecione uma seção válida para cada item.";
+            }
+            if (seen.has(section.id)) return "Cada seção pode aparecer apenas uma vez.";
+            seen.add(section.id);
+          }
+          return true;
+        }),
+    }),
+    defineField({
       name: "sectionOrder",
-      title: "Ordem das seções",
+      title: "Ordem antiga das seções",
       description:
         "Arraste para reorganizar as seções abaixo da abertura. A abertura permanece sempre no topo.",
       type: "array",
       group: "layout",
+      hidden: true,
       of: [
         defineArrayMember({
           type: "string",
