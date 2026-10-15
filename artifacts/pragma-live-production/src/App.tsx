@@ -46,6 +46,11 @@ import { useHomePage } from "@/sanity/use-home-page";
 import { SanityVisualEditing } from "@/sanity/visual-editing";
 import { resolveHomeSections, SECTION_ANCHORS } from "@/sanity/section-layout";
 import type { HomeSectionId } from "@/sanity/section-layout";
+import escutarWide from "@/assets/method/escutar-wide-1600.avif";
+import desenharWide from "@/assets/method/desenhar-wide-1600.avif";
+import prepararWide from "@/assets/method/preparar-wide-1600.avif";
+import executarWide from "@/assets/method/executar-wide-1600.avif";
+import entregarWide from "@/assets/method/entregar-wide-1600.avif";
 
 const queryClient = new QueryClient();
 
@@ -263,17 +268,38 @@ function mappedShot(image: SanityImage, caption: string) {
   };
 }
 
-function mappedStep(step: HomePage["method"]["steps"][number]): MethodStep {
-  const wideAsset = requireImage(step.wide?.image, `método ${step.id} wide`);
+const METHOD_WIDE_FALLBACKS = [
+  { src: escutarWide, focus: "40% 45%" },
+  { src: desenharWide, focus: "50% 55%" },
+  { src: prepararWide, focus: "50% 45%" },
+  { src: executarWide, focus: "70% 40%" },
+  { src: entregarWide, focus: "50% 40%" },
+] as const;
+
+function mappedStep(
+  step: HomePage["method"]["steps"][number],
+  index: number,
+): MethodStep {
+  const fallback = METHOD_WIDE_FALLBACKS[index];
+  const wideAsset = step.wide?.image?.asset ? step.wide.image : undefined;
   const tallAsset = step.tall?.image?.asset ? step.tall.image : undefined;
-  const wide = mappedShot(wideAsset, step.wide.caption);
+  const caption = step.wide?.caption || step.title;
+  const wide = wideAsset
+    ? mappedShot(wideAsset, caption)
+    : fallback
+      ? {
+          src: fallback.src,
+          srcSet: fallback.src,
+          caption,
+          focus: fallback.focus,
+        }
+      : (() => {
+          throw new Error(`Imagem ausente no Sanity: método ${step.id} wide.`);
+        })();
   const stills = (step.stills ?? []).flatMap((still) => {
     if (!still.image?.asset || !still.caption) return [];
     return [mappedShot(still.image, still.caption)];
   });
-  if (stills.length !== (step.stills ?? []).length) {
-    throw new Error(`Foto extra incompleta no método ${step.id}.`);
-  }
   return {
     id: step.id,
     num: step.num,

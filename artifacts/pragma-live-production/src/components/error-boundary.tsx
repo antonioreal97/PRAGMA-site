@@ -71,6 +71,9 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
+    document.dispatchEvent(
+      new CustomEvent("pragma-boot", { detail: { photos: [] } }),
+    );
     console.error(
       "ErrorBoundary caught an error:",
       toError(error),
