@@ -94,6 +94,7 @@ export const homePageQuery = `{
   },
   "settings": *[_id == "siteSettings"][0]{
     email,
+    whatsapp,
     footerTagline,
     seoTitle,
     seoDescription,

@@ -189,6 +189,7 @@ async function seed() {
     _id: "siteSettings",
     _type: "siteSettings",
     email: "ola@pragma.live",
+    whatsapp: "5561992733018",
     footerTagline: "Fazer acontecer é o nosso método.",
     seoTitle: "PRAGMA Live Production",
     seoDescription:
@@ -590,9 +591,9 @@ async function seed() {
       form: {
         heading: "Conte sobre o seu projeto",
         intro:
-          "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+          "Preencha o briefing para abrir no WhatsApp. Todos os campos são obrigatórios.",
         submitLabel: "Preparar briefing",
-        submitHint: "Você revisa e envia pelo seu aplicativo de e-mail.",
+        submitHint: "Você revisa e envia pelo WhatsApp.",
         fields: [
           {
             _key: "name",

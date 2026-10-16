@@ -770,13 +770,13 @@ export const homeType = defineType({
               rows: 2,
               validation: (rule) => rule.required(),
               initialValue:
-                "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+                "Preencha o briefing para abrir no WhatsApp. Todos os campos são obrigatórios.",
             }),
             defineField({
               name: "fields",
               title: "Perguntas",
               description:
-                "A ordem aqui é a ordem do formulário. Nome e e-mail entram no assunto e no rodapé do e-mail. As demais perguntas formam o briefing.",
+                "A ordem aqui é a ordem do formulário. Nome e e-mail entram no rodapé do briefing no WhatsApp. As demais perguntas formam o corpo da mensagem.",
               type: "array",
               of: [
                 defineArrayMember({
@@ -868,8 +868,7 @@ export const homeType = defineType({
               name: "submitHint",
               title: "Texto abaixo do botão",
               type: "string",
-              initialValue:
-                "Você revisa e envia pelo seu aplicativo de e-mail.",
+              initialValue: "Você revisa e envia pelo WhatsApp.",
             }),
           ],
         }),

@@ -922,9 +922,21 @@ html.motion-ok .hero-cue svg {
 .intro-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(40px, 7vw, 100px);
+  grid-template-areas:
+    "lead ."
+    "photo copy";
+  column-gap: clamp(40px, 7vw, 100px);
+  row-gap: 36px;
+  align-items: start;
+}
+.intro-lead {
+  grid-area: lead;
+}
+.intro-photo {
+  grid-area: photo;
 }
 .intro-copy {
+  grid-area: copy;
   max-width: 540px;
   color: var(--paper-dim);
 }
@@ -942,8 +954,8 @@ html.motion-ok .hero-cue svg {
 }
 .number-item {
   display: flex;
-  gap: 18px;
-  align-items: baseline;
+  gap: 14px;
+  align-items: center;
   padding: 14px 16px;
   border-radius: var(--radius);
   border: 1px solid transparent;
@@ -955,9 +967,17 @@ html.motion-ok .hero-cue svg {
   font: 400 0.75rem var(--font-brand-mono);
   color: var(--acid);
   white-space: nowrap;
+  min-width: 1.6em;
+}
+.number-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--acid);
+  opacity: 0.9;
 }
 .number-item p {
   font-size: 0.9375rem;
+  margin: 0;
 }
 
 /* ---- Capacidades ------------------------------------------------------ */
@@ -1239,7 +1259,7 @@ html.motion-ok .work-moodboard-cell img[data-leaving] {
 /* ---- Fotos ------------------------------------------------------------ */
 .intro-photo {
   max-width: 540px;
-  margin: 36px 0 0;
+  margin: 0;
 }
 .intro-photo img {
   aspect-ratio: 3 / 2;
@@ -1248,7 +1268,12 @@ html.motion-ok .work-moodboard-cell img[data-leaving] {
   object-position: center 18%;
   background: var(--surface);
 }
-.intro-photo figcaption,
+.intro-photo-mark {
+  display: flex;
+  align-items: center;
+  margin-top: 14px;
+  min-height: 8px;
+}
 .gallery-item figcaption {
   margin-top: 14px;
   color: var(--paper-dim);
@@ -1740,38 +1765,18 @@ html.motion-ok .method-cue svg {
   line-height: 1.6;
   color: var(--paper-dim);
 }
-/* A legenda é frase, não rótulo: mono, mas sem caixa-alta. */
 .method-card-caption {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
+  align-items: center;
   margin: 20px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--line);
-  font-size: 0.6875rem;
-  line-height: 1.55;
-  letter-spacing: 0.01em;
-  text-transform: none;
-  color: var(--paper-dim);
+  min-height: 8px;
 }
-.method-card-caption svg {
-  margin-top: 2px;
-  color: var(--acid);
-}
-.caption-tall:not(.caption-wide) {
-  display: none;
-}
-/* Mesmo corte do <source media> em method-story.tsx: foto em pé, foco e
-   legenda da foto em pé. */
+/* Mesmo corte do <source media> em method-story.tsx: foto em pé. */
 @media (orientation: portrait) {
   .method-shot[data-lead] img {
     object-position: var(--focus-tall, 50% 50%);
-  }
-  .caption-tall:not(.caption-wide) {
-    display: inline;
-  }
-  .caption-wide:not(.caption-tall) {
-    display: none;
   }
 }
 @media (hover: hover) and (pointer: fine) {
@@ -2280,7 +2285,15 @@ html.motion-ok .method-cue svg {
     font-size: clamp(2.75rem, 7.4vw, 4.1rem);
     max-width: 660px;
   }
-  .intro-layout,
+  .intro-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "lead"
+      "photo"
+      "copy";
+    row-gap: 28px;
+    column-gap: 0;
+  }
   .contact-layout {
     grid-template-columns: 1fr;
     gap: 40px;

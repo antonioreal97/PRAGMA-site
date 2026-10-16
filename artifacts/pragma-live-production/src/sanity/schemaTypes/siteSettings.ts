@@ -15,6 +15,21 @@ export const siteSettingsType = defineType({
       validation: (rule) => rule.required().email(),
     }),
     defineField({
+      name: "whatsapp",
+      title: "WhatsApp",
+      description:
+        "Número com DDI, só dígitos ou formatado (ex.: 5561992733018 ou +55 61 99273-3018).",
+      type: "string",
+      validation: (rule) =>
+        rule.required().custom((value) => {
+          const digits = (value ?? "").replace(/\D/g, "");
+          if (digits.length < 12 || digits.length > 15) {
+            return "Informe um número com DDI (12 a 15 dígitos).";
+          }
+          return true;
+        }),
+    }),
+    defineField({
       name: "footerTagline",
       title: "Frase do rodapé",
       type: "string",

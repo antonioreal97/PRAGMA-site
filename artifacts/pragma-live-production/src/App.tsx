@@ -3,11 +3,14 @@ import {
   ArrowUpRight,
   AudioLines,
   Cable,
+  ClipboardList,
   Lightbulb,
   type LucideIcon,
   MonitorPlay,
+  PackageCheck,
   RadioTower,
   Users,
+  Zap,
 } from "lucide-react";
 import {
   Fragment,
@@ -46,6 +49,7 @@ import { useHomePage } from "@/sanity/use-home-page";
 import { SanityVisualEditing } from "@/sanity/visual-editing";
 import { resolveHomeSections, SECTION_ANCHORS } from "@/sanity/section-layout";
 import type { HomeSectionId } from "@/sanity/section-layout";
+import { whatsappUrl } from "@/lib/whatsapp";
 import escutarWide from "@/assets/method/escutar-wide-1600.avif";
 import desenharWide from "@/assets/method/desenhar-wide-1600.avif";
 import prepararWide from "@/assets/method/preparar-wide-1600.avif";
@@ -62,6 +66,8 @@ const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   streaming: RadioTower,
   producao: Users,
 };
+
+const ABOUT_POINT_ICONS: LucideIcon[] = [ClipboardList, Zap, PackageCheck];
 
 const stagger = (index: number, step = 70): CSSProperties =>
   ({ "--reveal-delay": `${index * step}ms` }) as CSSProperties;
@@ -386,6 +392,7 @@ function HomeLoaded({
     });
   const showHeroLink = (href: string) =>
     !href.startsWith("#") || href === "#top" || visibleAnchors.has(href.slice(1));
+  const contactWhatsApp = whatsappUrl(settings.whatsapp);
 
   useEffect(() => {
     document.title = settings.seoTitle;
@@ -423,7 +430,7 @@ function HomeLoaded({
     about: () => (
       <section className="section intro" id="about" tabIndex={-1}>
         <div className="wrap intro-layout">
-          <div data-reveal>
+          <div className="intro-lead" data-reveal>
             <div className="section-label">{sectionNames.about || home.about.label}</div>
             <h2 className="section-title">
               <AccentTitle
@@ -431,33 +438,43 @@ function HomeLoaded({
                 accent={home.about.titleAccent}
               />
             </h2>
-            <figure className="intro-photo">
-              <div className="frame frame-corners">
-                <img
-                  src={aboutPhoto.src}
-                  srcSet={aboutPhoto.srcSet}
-                  sizes="(max-width: 900px) 92vw, 42vw"
-                  alt={aboutPhoto.alt}
-                  width={aboutPhoto.width}
-                  height={aboutPhoto.height}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <figcaption className="mono">{home.about.caption}</figcaption>
-            </figure>
           </div>
+          <figure className="intro-photo" data-reveal>
+            <div className="frame frame-corners">
+              <img
+                src={aboutPhoto.src}
+                srcSet={aboutPhoto.srcSet}
+                sizes="(max-width: 900px) 92vw, 42vw"
+                alt={aboutPhoto.alt}
+                width={aboutPhoto.width}
+                height={aboutPhoto.height}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <figcaption className="intro-photo-mark" aria-hidden="true">
+              <span className="live-dot" />
+            </figcaption>
+          </figure>
           <div className="intro-copy" data-reveal style={stagger(1, 120)}>
             {home.about.copy.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
             <div className="number-list">
-              {home.about.points.map((copy, index) => (
-                <div className="number-item" key={copy}>
-                  <span className="num">/ 0{index + 1}</span>
-                  <p>{copy}</p>
-                </div>
-              ))}
+              {home.about.points.map((copy, index) => {
+                const Icon = ABOUT_POINT_ICONS[index % ABOUT_POINT_ICONS.length];
+                return (
+                  <div className="number-item" key={copy}>
+                    <span className="num" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="number-icon" aria-hidden="true">
+                      <Icon size={18} strokeWidth={1.5} />
+                    </span>
+                    <p>{copy}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -623,13 +640,18 @@ function HomeLoaded({
             <p className="contact-note">{home.contact.note}</p>
             <a
               className="contact-email text-link"
-              href={`mailto:${settings.email}`}
+              href={contactWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              {settings.email} <ArrowUpRight size={18} aria-hidden="true" />
+              WhatsApp <ArrowUpRight size={18} aria-hidden="true" />
             </a>
           </div>
           <div data-reveal style={stagger(1, 120)}>
-            <ContactForm email={settings.email} form={home.contact.form} />
+            <ContactForm
+              whatsapp={settings.whatsapp}
+              form={home.contact.form}
+            />
           </div>
         </div>
       </section>
@@ -640,7 +662,7 @@ function HomeLoaded({
       <a className="skip-link" href="#top">
         Pular para o conteúdo
       </a>
-      <Header links={navLinks} />
+      <Header links={navLinks} contactHref={contactWhatsApp} />
       <main id="top" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <HeroMosaic tiles={mosaicTiles} />
@@ -715,8 +737,13 @@ function HomeLoaded({
             <p>{settings.footerTagline}</p>
           </div>
           <nav className="footer-links" aria-label="Navegação do rodapé">
-            <a href={`mailto:${settings.email}`} data-testid="link-email">
-              {settings.email} <ArrowUpRight size={16} aria-hidden="true" />
+            <a
+              href={contactWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-whatsapp"
+            >
+              WhatsApp <ArrowUpRight size={16} aria-hidden="true" />
             </a>
             <a href="#top" data-testid="link-back-top">
               Voltar ao topo <ArrowUp size={16} aria-hidden="true" />

@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { ArrowUpRight, Check, Copy, Mail } from "lucide-react";
+import { ArrowUpRight, Check, Copy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { whatsappUrl } from "@/lib/whatsapp";
 import type {
   ContactFormContent,
   ContactQuestion,
@@ -12,9 +13,9 @@ import type {
 const fallbackForm: ContactFormContent = {
   heading: "Conte sobre o seu projeto",
   intro:
-    "Preencha o briefing para preparar seu e-mail. Todos os campos são obrigatórios.",
+    "Preencha o briefing para abrir no WhatsApp. Todos os campos são obrigatórios.",
   submitLabel: "Preparar briefing",
-  submitHint: "Você revisa e envia pelo seu aplicativo de e-mail.",
+  submitHint: "Você revisa e envia pelo WhatsApp.",
   fields: [
     {
       id: "name",
@@ -52,11 +53,16 @@ function formContent(form?: ContactFormContent): ContactFormContent {
     return [{ ...field, id, label: field.label.trim() }];
   });
   if (!fields.length) return fallbackForm;
+  const intro = form?.intro?.trim() || "";
+  const hint = form?.submitHint?.trim() || "";
+  // Copy antigo no CMS ainda fala em e-mail; o canal agora é WhatsApp.
   return {
     heading: form?.heading?.trim() || fallbackForm.heading,
-    intro: form?.intro?.trim() || fallbackForm.intro,
+    intro:
+      intro && !/e-?mail/i.test(intro) ? intro : fallbackForm.intro,
     submitLabel: form?.submitLabel?.trim() || fallbackForm.submitLabel,
-    submitHint: form?.submitHint?.trim() || fallbackForm.submitHint,
+    submitHint:
+      hint && !/e-?mail/i.test(hint) ? hint : fallbackForm.submitHint,
     fields,
   };
 }
@@ -97,10 +103,10 @@ function briefingBody(fields: ContactQuestion[], values: Map<string, string>) {
 }
 
 export function ContactForm({
-  email,
+  whatsapp,
   form,
 }: {
-  email: string;
+  whatsapp?: string;
   form?: ContactFormContent;
 }) {
   const content = formContent(form);
@@ -145,12 +151,10 @@ export function ContactForm({
       });
       return;
     }
-    const name = content.fields.find((field) => field.kind === "name");
-    const subjectName = name ? values.get(name.id) : "";
     const body = briefingBody(content.fields, values);
     setDraft({
       body,
-      url: `mailto:${email}?subject=${encodeURIComponent("Novo projeto | " + (subjectName || "Briefing"))}&body=${encodeURIComponent(body)}`,
+      url: whatsappUrl(whatsapp, body),
     });
   };
   const copy = async () => {
@@ -248,14 +252,11 @@ export function ContactForm({
             <h4>
               <Check size={18} aria-hidden="true" /> Seu briefing está pronto
             </h4>
-            <p>
-              Abra seu e-mail para concluir o envio para{" "}
-              <strong>{email}</strong>.
-            </p>
+            <p>Abra o WhatsApp para enviar o briefing para a PRAGMA.</p>
             <div className="draft-actions">
               <Button asChild>
-                <a href={draft.url}>
-                  <Mail aria-hidden="true" /> Abrir e-mail
+                <a href={draft.url} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle aria-hidden="true" /> Abrir WhatsApp
                 </a>
               </Button>
               <Button

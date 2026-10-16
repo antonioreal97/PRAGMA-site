@@ -8,7 +8,13 @@ type NavLink = {
   label: string;
 };
 
-export function Header({ links }: { links: NavLink[] }) {
+export function Header({
+  links,
+  contactHref,
+}: {
+  links: NavLink[];
+  contactHref?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("");
   const { progress, stuck } = useScrollProgress();
@@ -106,21 +112,34 @@ export function Header({ links }: { links: NavLink[] }) {
           className={`nav ${open ? "open" : ""}`}
           aria-label="Navegação principal"
         >
-          {links.map(({ id, label }) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              onClick={() => navigate(id)}
-              aria-current={active === id ? "location" : undefined}
-              className={id === "contact" ? "nav-cta" : undefined}
-              data-testid={`link-${id}`}
-            >
-              {label}
-              {id === "contact" && (
-                <ArrowUpRight size={16} aria-hidden="true" />
-              )}
-            </a>
-          ))}
+          {links.map(({ id, label }) => {
+            const external = id === "contact" && contactHref;
+            return (
+              <a
+                key={id}
+                href={external || `#${id}`}
+                onClick={() => {
+                  if (external) {
+                    setOpen(false);
+                    return;
+                  }
+                  navigate(id);
+                }}
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+                aria-current={
+                  !external && active === id ? "location" : undefined
+                }
+                className={id === "contact" ? "nav-cta" : undefined}
+                data-testid={`link-${id}`}
+              >
+                {label}
+                {id === "contact" && (
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                )}
+              </a>
+            );
+          })}
         </nav>
       </div>
       <div

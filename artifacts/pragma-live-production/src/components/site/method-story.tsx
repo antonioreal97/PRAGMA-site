@@ -1,4 +1,4 @@
-import { ArrowDown, Camera } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import {
   useEffect,
   useRef,
@@ -83,22 +83,6 @@ function Frames({ step }: { step: MethodStep }) {
   ));
 }
 
-function StepCaption({ step, slot }: { step: MethodStep; slot: number }) {
-  const shot = step.frames[slot] ?? step.wide;
-  if (slot > 0) {
-    return <span className="caption-wide caption-tall">{shot.caption}</span>;
-  }
-  return (
-    <>
-      <span
-        className={step.tall ? "caption-wide" : "caption-wide caption-tall"}
-      >
-        {step.wide.caption}
-      </span>
-      {step.tall && <span className="caption-tall">{step.tall.caption}</span>}
-    </>
-  );
-}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -323,16 +307,11 @@ export function MethodStory({ method }: { method: MethodContent }) {
                 >
                   <p className="method-card-meta mono">
                     <span>{step.num}</span>
-                    {step.phase}
                   </p>
                   <h3 id={`metodo-${step.id}-title`}>{step.title}</h3>
                   <p className="method-card-copy">{step.copy}</p>
-                  <p className="method-card-caption mono">
-                    <Camera size={13} aria-hidden="true" />
-                    <StepCaption
-                      step={step}
-                      slot={index === shown ? still : 0}
-                    />
+                  <p className="method-card-caption" aria-hidden="true">
+                    <span className="live-dot" />
                   </p>
                 </article>
               </div>

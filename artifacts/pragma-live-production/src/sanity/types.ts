@@ -22,6 +22,7 @@ export type NavLink = {
 
 export type SiteSettings = {
   email: string;
+  whatsapp?: string;
   footerTagline: string;
   seoTitle: string;
   seoDescription: string;
