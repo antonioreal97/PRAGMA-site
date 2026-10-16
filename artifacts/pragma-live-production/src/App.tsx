@@ -3,14 +3,14 @@ import {
   ArrowUpRight,
   AudioLines,
   Cable,
+  CalendarCheck,
   ClipboardList,
-  Lightbulb,
   type LucideIcon,
   MessageCircle,
-  MonitorPlay,
   PackageCheck,
   RadioTower,
-  Users,
+  Spotlight,
+  Tv,
   Zap,
 } from "lucide-react";
 import {
@@ -61,11 +61,11 @@ const queryClient = new QueryClient();
 
 const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   som: AudioLines,
-  luz: Lightbulb,
-  imagem: MonitorPlay,
+  luz: Spotlight,
+  imagem: Tv,
   infraestrutura: Cable,
   streaming: RadioTower,
-  producao: Users,
+  producao: CalendarCheck,
 };
 
 const ABOUT_POINT_ICONS: LucideIcon[] = [ClipboardList, Zap, PackageCheck];
