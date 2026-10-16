@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Lightbulb,
   type LucideIcon,
+  MessageCircle,
   MonitorPlay,
   PackageCheck,
   RadioTower,
@@ -638,14 +639,18 @@ function HomeLoaded({
               ) : null}
             </h2>
             <p className="contact-note">{home.contact.note}</p>
-            <a
-              className="contact-email text-link"
-              href={contactWhatsApp}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              WhatsApp <ArrowUpRight size={18} aria-hidden="true" />
-            </a>
+            <Button asChild size="lg" className="contact-whatsapp">
+              <a
+                href={contactWhatsApp}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="link-contact-whatsapp"
+              >
+                <MessageCircle aria-hidden="true" />
+                Falar no WhatsApp
+                <ArrowUpRight aria-hidden="true" />
+              </a>
+            </Button>
           </div>
           <div data-reveal style={stagger(1, 120)}>
             <ContactForm
@@ -738,12 +743,15 @@ function HomeLoaded({
           </div>
           <nav className="footer-links" aria-label="Navegação do rodapé">
             <a
+              className="footer-whatsapp"
               href={contactWhatsApp}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="link-whatsapp"
             >
-              WhatsApp <ArrowUpRight size={16} aria-hidden="true" />
+              <MessageCircle size={16} aria-hidden="true" />
+              WhatsApp
+              <ArrowUpRight size={16} aria-hidden="true" />
             </a>
             <a href="#top" data-testid="link-back-top">
               Voltar ao topo <ArrowUp size={16} aria-hidden="true" />

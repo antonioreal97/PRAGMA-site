@@ -254,7 +254,7 @@ export function ContactForm({
             </h4>
             <p>Abra o WhatsApp para enviar o briefing para a PRAGMA.</p>
             <div className="draft-actions">
-              <Button asChild>
+              <Button asChild size="lg" className="contact-whatsapp-draft">
                 <a href={draft.url} target="_blank" rel="noopener noreferrer">
                   <MessageCircle aria-hidden="true" /> Abrir WhatsApp
                 </a>

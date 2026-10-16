@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, MessageCircle, X } from "lucide-react";
 import { Brand } from "./brand";
 import { useScrollProgress } from "./motion";
 
@@ -133,6 +133,9 @@ export function Header({
                 className={id === "contact" ? "nav-cta" : undefined}
                 data-testid={`link-${id}`}
               >
+                {id === "contact" && (
+                  <MessageCircle size={16} aria-hidden="true" />
+                )}
                 {label}
                 {id === "contact" && (
                   <ArrowUpRight size={16} aria-hidden="true" />
