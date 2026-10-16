@@ -11,9 +11,8 @@ import type {
 } from "@/sanity/types";
 
 const fallbackForm: ContactFormContent = {
-  heading: "Conte sobre o seu projeto",
-  intro:
-    "Preencha o briefing para abrir no WhatsApp. Todos os campos são obrigatórios.",
+  heading: "Prefere que a gente entre em contato?",
+  intro: "Deixe seu nome, WhatsApp e uma breve descrição do projeto.",
   submitLabel: "Preparar briefing",
   submitHint: "Você revisa e envia pelo WhatsApp.",
   fields: [
@@ -24,14 +23,14 @@ const fallbackForm: ContactFormContent = {
       kind: "name",
     },
     {
-      id: "email",
-      label: "Seu e-mail",
-      placeholder: "voce@empresa.com",
-      kind: "email",
+      id: "whatsapp",
+      label: "Seu WhatsApp",
+      placeholder: "(61) 99999-9999",
+      kind: "text",
     },
     {
       id: "project",
-      label: "O que vamos colocar de pé?",
+      label: "Breve descrição do projeto",
       placeholder: "Tipo de evento, data, local e o que você tem em mente…",
       hint: "Ainda não tem todos os detalhes? Comece pela ideia.",
       kind: "textarea",
@@ -46,12 +45,36 @@ const kinds = new Set<ContactQuestionKind>([
   "textarea",
 ]);
 
-function formContent(form?: ContactFormContent): ContactFormContent {
-  const fields = (form?.fields ?? []).flatMap((field) => {
-    const id = field.id?.trim();
-    if (!id || !kinds.has(field.kind) || !field.label?.trim()) return [];
-    return [{ ...field, id, label: field.label.trim() }];
+function isPhoneField(field: ContactQuestion) {
+  return /whatsapp|celular|telefone|phone/i.test(`${field.id} ${field.label}`);
+}
+
+/** CMS às vezes duplica celular (texto + e-mail relabelado). Mantém só um WhatsApp. */
+function dedupePhoneFields(fields: ContactQuestion[]) {
+  let keptPhone = false;
+  return fields.flatMap((field) => {
+    if (field.kind === "email" && isPhoneField(field)) return [];
+    if (!isPhoneField(field)) return [field];
+    if (keptPhone) return [];
+    keptPhone = true;
+    return [
+      {
+        ...field,
+        kind: field.kind === "email" ? "text" : field.kind,
+        id: field.id === "email" ? "whatsapp" : field.id,
+      },
+    ];
   });
+}
+
+function formContent(form?: ContactFormContent): ContactFormContent {
+  const fields = dedupePhoneFields(
+    (form?.fields ?? []).flatMap((field) => {
+      const id = field.id?.trim();
+      if (!id || !kinds.has(field.kind) || !field.label?.trim()) return [];
+      return [{ ...field, id, label: field.label.trim() }];
+    }),
+  );
   if (!fields.length) return fallbackForm;
   const intro = form?.intro?.trim() || "";
   const hint = form?.submitHint?.trim() || "";
@@ -79,6 +102,8 @@ function emptyMessage(field: ContactQuestion) {
     return "Informe um e-mail válido, como voce@empresa.com.";
   if (field.kind === "name")
     return "Informe seu nome para identificarmos a conversa.";
+  if (isPhoneField(field))
+    return "Informe um WhatsApp com DDD, como (61) 99999-9999.";
   if (field.kind === "textarea")
     return "Conte um pouco sobre o que você está planejando.";
   return `Preencha “${field.label}”.`;
@@ -87,8 +112,12 @@ function emptyMessage(field: ContactQuestion) {
 function briefingBody(fields: ContactQuestion[], values: Map<string, string>) {
   const name = fields.find((field) => field.kind === "name");
   const reply = fields.find((field) => field.kind === "email");
+  const phone = fields.find((field) => isPhoneField(field));
   const questions = fields.filter(
-    (field) => field.kind !== "name" && field.kind !== "email",
+    (field) =>
+      field.kind !== "name" &&
+      field.kind !== "email" &&
+      !isPhoneField(field),
   );
   const answers = questions
     .map((field) => {
@@ -98,6 +127,7 @@ function briefingBody(fields: ContactQuestion[], values: Map<string, string>) {
     .join("\n\n");
   const lines = ["Olá, PRAGMA!", "", answers, ""];
   if (name) lines.push(`Nome: ${values.get(name.id) ?? ""}`);
+  if (phone) lines.push(`WhatsApp: ${values.get(phone.id) ?? ""}`);
   if (reply) lines.push(`E-mail: ${values.get(reply.id) ?? ""}`);
   return lines.join("\n");
 }

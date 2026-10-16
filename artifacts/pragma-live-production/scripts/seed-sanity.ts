@@ -589,9 +589,8 @@ async function seed() {
       titleAccent: "Vamos fazer.",
       note: "Conte o que está planejando. Vamos encontrar um caminho claro para colocar isso em cena.",
       form: {
-        heading: "Conte sobre o seu projeto",
-        intro:
-          "Preencha o briefing para abrir no WhatsApp. Todos os campos são obrigatórios.",
+        heading: "Prefere que a gente entre em contato?",
+        intro: "Deixe seu nome, WhatsApp e uma breve descrição do projeto.",
         submitLabel: "Preparar briefing",
         submitHint: "Você revisa e envia pelo WhatsApp.",
         fields: [
@@ -604,18 +603,18 @@ async function seed() {
             kind: "name",
           },
           {
-            _key: "email",
+            _key: "whatsapp",
             _type: "object",
-            id: "email",
-            label: "Seu e-mail",
-            placeholder: "voce@empresa.com",
-            kind: "email",
+            id: "whatsapp",
+            label: "Seu WhatsApp",
+            placeholder: "(61) 99999-9999",
+            kind: "text",
           },
           {
             _key: "project",
             _type: "object",
             id: "project",
-            label: "O que vamos colocar de pé?",
+            label: "Breve descrição do projeto",
             placeholder: "Tipo de evento, data, local e o que você tem em mente…",
             hint: "Ainda não tem todos os detalhes? Comece pela ideia.",
             kind: "textarea",

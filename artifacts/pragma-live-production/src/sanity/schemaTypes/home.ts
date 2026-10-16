@@ -776,7 +776,7 @@ export const homeType = defineType({
               name: "fields",
               title: "Perguntas",
               description:
-                "A ordem aqui é a ordem do formulário. Nome e e-mail entram no rodapé do briefing no WhatsApp. As demais perguntas formam o corpo da mensagem.",
+                "A ordem aqui é a ordem do formulário. Nome (obrigatório) e um campo de WhatsApp do visitante entram no briefing. Não duplique celular/WhatsApp — use só um. E-mail é opcional.",
               type: "array",
               of: [
                 defineArrayMember({
@@ -852,8 +852,23 @@ export const homeType = defineType({
                     ),
                   );
                   if (!kinds.has("name")) return "Inclua uma pergunta do tipo Nome.";
-                  if (!kinds.has("email"))
-                    return "Inclua uma pergunta do tipo E-mail.";
+                  const phoneLabels = fields.filter((field) => {
+                    if (!field || typeof field !== "object") return false;
+                    const label =
+                      "label" in field && typeof field.label === "string"
+                        ? field.label
+                        : "";
+                    const id =
+                      "id" in field && typeof field.id === "string"
+                        ? field.id
+                        : "";
+                    return /whatsapp|celular|telefone|phone/i.test(
+                      `${id} ${label}`,
+                    );
+                  });
+                  if (phoneLabels.length > 1) {
+                    return "Há mais de um campo de celular/WhatsApp. Deixe só um.";
+                  }
                   return true;
                 }),
             }),
