@@ -1029,8 +1029,8 @@ html.motion-ok .hero-cue svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
   border: 1px solid rgb(33 224 93 / 0.22);
   background: radial-gradient(120% 120% at 30% 0%, rgb(33 224 93 / 0.2), rgb(33 224 93 / 0.04));
@@ -1039,6 +1039,10 @@ html.motion-ok .hero-cue svg {
     border-color var(--duration) var(--ease),
     box-shadow var(--duration) var(--ease),
     transform var(--duration) var(--ease);
+}
+.cap-icon svg {
+  display: block;
+  flex-shrink: 0;
 }
 .cap-index {
   font-family: var(--font-brand-mono);
@@ -2432,8 +2436,12 @@ html.motion-ok .contact-whatsapp {
     margin-bottom: 22px;
   }
   .cap-icon {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+  }
+  .cap-icon svg {
+    width: 26px;
+    height: 26px;
   }
   .work-grid {
     gap: 40px;

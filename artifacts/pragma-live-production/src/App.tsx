@@ -1,16 +1,10 @@
 import {
   ArrowUp,
   ArrowUpRight,
-  AudioLines,
-  Cable,
-  CalendarCheck,
   ClipboardList,
   type LucideIcon,
   MessageCircle,
   PackageCheck,
-  RadioTower,
-  Spotlight,
-  Tv,
   Zap,
 } from "lucide-react";
 import {
@@ -28,6 +22,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Brand } from "@/components/site/brand";
+import { resolveCapabilityIcon } from "@/components/site/capability-icons";
 import { CmsError, CmsLoading } from "@/components/site/cms-status";
 import { Header } from "@/components/site/header";
 import { HeroMosaic } from "@/components/site/hero-mosaic";
@@ -58,15 +53,6 @@ import executarWide from "@/assets/method/executar-wide-1600.avif";
 import entregarWide from "@/assets/method/entregar-wide-1600.avif";
 
 const queryClient = new QueryClient();
-
-const CAPABILITY_ICONS: Record<string, LucideIcon> = {
-  som: AudioLines,
-  luz: Spotlight,
-  imagem: Tv,
-  infraestrutura: Cable,
-  streaming: RadioTower,
-  producao: CalendarCheck,
-};
 
 const ABOUT_POINT_ICONS: LucideIcon[] = [ClipboardList, Zap, PackageCheck];
 
@@ -500,12 +486,7 @@ function HomeLoaded({
           </div>
           <div className="cap-grid">
             {home.capabilities.items.map((item, position) => {
-              const Icon = CAPABILITY_ICONS[item.icon];
-              if (!Icon) {
-                throw new Error(
-                  `Ícone de capacidade desconhecido: "${item.icon}".`,
-                );
-              }
+              const Icon = resolveCapabilityIcon(item);
               return (
                 <article
                   className="panel cap-card"
@@ -517,7 +498,7 @@ function HomeLoaded({
                 >
                   <div className="cap-top">
                     <span className="cap-icon" aria-hidden="true">
-                      <Icon size={22} strokeWidth={1.5} />
+                      <Icon />
                     </span>
                     <span className="cap-index" aria-hidden="true">
                       {item.num}
