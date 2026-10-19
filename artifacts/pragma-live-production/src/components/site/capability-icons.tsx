@@ -93,6 +93,15 @@ export function IconGamer(props: CapabilityIconProps) {
   );
 }
 
+export function IconInfraestrutura(props: CapabilityIconProps) {
+  return (
+    <ServiceIcon {...props}>
+      <path d="M12 84h76M18 84V24h64v60M18 42h64M18 62h64M30 24v60M50 24v60M70 24v60" />
+      <path d="m18 24 12 18 20-18 20 18 12-18M18 42l12 20 20-20 20 20 12-20M18 62l12 22 20-22 20 22 12-22" />
+    </ServiceIcon>
+  );
+}
+
 type CapabilityIconComponent = (props: CapabilityIconProps) => ReactNode;
 
 const CAPABILITY_ICONS: Record<string, CapabilityIconComponent> = {
@@ -106,6 +115,7 @@ const CAPABILITY_ICONS: Record<string, CapabilityIconComponent> = {
   audiovisual: IconAudiovisual,
   podcast: IconPodcast,
   gamer: IconGamer,
+  infraestrutura: IconInfraestrutura,
 };
 
 const CAPABILITY_ICON_BY_TITLE: Record<string, CapabilityIconComponent> = {
@@ -126,17 +136,18 @@ function normalizeCapabilityTitle(title: string) {
 }
 
 export function resolveCapabilityIcon(item: {
-  icon: string;
+  icon?: string;
   title: string;
 }): CapabilityIconComponent {
+  // A seleção explícita feita no Sanity deve prevalecer. O título é apenas
+  // compatibilidade para documentos antigos, que ainda não tinham `icon`.
+  const byKey = item.icon ? CAPABILITY_ICONS[item.icon] : undefined;
+  if (byKey) return byKey;
+
   const byTitle =
     CAPABILITY_ICON_BY_TITLE[normalizeCapabilityTitle(item.title)];
-  if (byTitle) return byTitle;
-  const byKey = CAPABILITY_ICONS[item.icon];
-  if (!byKey) {
-    throw new Error(
-      `Ícone de capacidade desconhecido: "${item.icon}" (serviço: "${item.title}").`,
-    );
-  }
-  return byKey;
+
+  // Conteúdo editorial nunca deve derrubar a landing inteira. Se um valor
+  // antigo ou inesperado chegar do CMS, usamos um ícone neutro como fallback.
+  return byTitle ?? IconAudiovisual;
 }

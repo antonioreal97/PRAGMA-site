@@ -51,7 +51,10 @@ export const homeType = defineType({
     },
   },
   groups: [
-    { name: "layout", title: "Ordem das seções" },
+    // Abrir o documento nesta aba evita montar, de uma vez, todas as galerias
+    // e dezenas de previews de imagem do singleton `home`. O modo "All fields"
+    // estava deixando o Structure instável e podia terminar em "Internal error".
+    { name: "layout", title: "Ordem das seções", default: true },
     { name: "hero", title: "Abertura" },
     { name: "about", title: "O que fazemos" },
     { name: "anatomy", title: "Anatomia" },
