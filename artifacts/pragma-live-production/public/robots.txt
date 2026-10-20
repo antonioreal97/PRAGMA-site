@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /studio
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /studio
+
+Sitemap: https://pragmasite.vercel.app/sitemap.xml

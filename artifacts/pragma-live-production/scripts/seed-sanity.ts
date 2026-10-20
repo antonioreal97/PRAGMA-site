@@ -191,9 +191,9 @@ async function seed() {
     email: "ola@pragma.live",
     whatsapp: "5561992733018",
     footerTagline: "Fazer acontecer é o nosso método.",
-    seoTitle: "PRAGMA Live Production",
+    seoTitle: "Produção de eventos, som, luz e LED em Brasília | PRAGMA",
     seoDescription:
-      "Som, luz, imagem, streaming e produção para eventos. A PRAGMA coordena cada camada para que a sua ideia aconteça — antes, durante e depois do palco.",
+      "Produção técnica e audiovisual para eventos em Brasília: som, iluminação, painel de LED, transmissão ao vivo, captação e estrutura.",
     nav: [
       { _key: "capabilities", id: "capabilities", label: "Capacidades" },
       { _key: "work", id: "work", label: "Projetos" },

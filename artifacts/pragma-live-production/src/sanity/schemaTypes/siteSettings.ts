@@ -38,15 +38,32 @@ export const siteSettingsType = defineType({
     defineField({
       name: "seoTitle",
       title: "Título SEO",
+      description:
+        "Descreva o serviço principal e a cidade. Recomendado: até 65 caracteres.",
       type: "string",
-      validation: (rule) => rule.required(),
+      validation: (rule) =>
+        [
+          rule.required(),
+          rule.max(65).warning("Prefira um título com até 65 caracteres."),
+        ],
     }),
     defineField({
       name: "seoDescription",
       title: "Descrição SEO",
+      description:
+        "Resumo objetivo dos serviços, da região atendida e do diferencial. Recomendado: 120 a 165 caracteres.",
       type: "text",
       rows: 3,
-      validation: (rule) => rule.required(),
+      validation: (rule) =>
+        [
+          rule.required(),
+          rule
+            .min(100)
+            .warning("A descrição pode comunicar melhor com ao menos 100 caracteres."),
+          rule
+            .max(165)
+            .warning("Prefira uma descrição com até 165 caracteres."),
+        ],
     }),
     defineField({
       name: "nav",

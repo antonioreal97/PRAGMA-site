@@ -46,6 +46,7 @@ import { SanityVisualEditing } from "@/sanity/visual-editing";
 import { resolveHomeSections, SECTION_ANCHORS } from "@/sanity/section-layout";
 import type { HomeSectionId } from "@/sanity/section-layout";
 import { whatsappUrl } from "@/lib/whatsapp";
+import { applySeoHead, faqEntries } from "@/lib/seo";
 import escutarWide from "@/assets/method/escutar-wide-1600.avif";
 import desenharWide from "@/assets/method/desenhar-wide-1600.avif";
 import prepararWide from "@/assets/method/preparar-wide-1600.avif";
@@ -382,10 +383,8 @@ function HomeLoaded({
   const contactWhatsApp = whatsappUrl(settings.whatsapp);
 
   useEffect(() => {
-    document.title = settings.seoTitle;
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", settings.seoDescription);
-  }, [settings.seoDescription, settings.seoTitle]);
+    applySeoHead(home, settings);
+  }, [home, settings]);
 
   const aboutImage = requireImage(home.about.image, "about");
   const aboutPhoto = mappedPhoto(aboutImage, home.about.alt, home.about.caption);
@@ -713,8 +712,12 @@ function HomeLoaded({
         </section>
 
         {visibleSections.map(({ id }) => (
-          <Fragment key={id}>{contentSections[id]()}</Fragment>
+          <Fragment key={id}>
+            {id === "contact" ? <FaqSection home={home} /> : null}
+            {contentSections[id]()}
+          </Fragment>
         ))}
+        {!visibleAnchors.has("contact") ? <FaqSection home={home} /> : null}
       </main>
       <footer className="footer">
         <div className="wrap footer-inner">
@@ -723,6 +726,7 @@ function HomeLoaded({
             <p>{settings.footerTagline}</p>
           </div>
           <nav className="footer-links" aria-label="Navegação do rodapé">
+            <a href="#faq">Dúvidas frequentes</a>
             <a
               className="footer-whatsapp"
               href={contactWhatsApp}
@@ -742,6 +746,35 @@ function HomeLoaded({
       </footer>
       <div className="fx-grain" aria-hidden="true" />
     </div>
+  );
+}
+
+function FaqSection({ home }: { home: HomePage }) {
+  const entries = faqEntries(home);
+  return (
+    <section
+      className="section faq"
+      id="faq"
+      aria-labelledby="faq-title"
+      tabIndex={-1}
+    >
+      <div className="wrap faq-layout">
+        <div className="faq-heading" data-reveal>
+          <div className="section-label">Dúvidas frequentes</div>
+          <h2 className="section-title" id="faq-title">
+            Respostas para tirar a ideia do papel.
+          </h2>
+        </div>
+        <div className="faq-list" data-reveal style={stagger(1, 120)}>
+          {entries.map(({ question, answer }) => (
+            <details className="faq-item" key={question}>
+              <summary>{question}</summary>
+              <p>{answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

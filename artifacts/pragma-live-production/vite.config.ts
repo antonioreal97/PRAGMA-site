@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
+import { seoPrerender } from './seo-build';
 
 // Replit injects PORT and BASE_PATH; other hosts (e.g. Vercel) don't, so fall
 // back to sensible defaults instead of failing the build.
@@ -46,6 +47,7 @@ export default defineConfig({
   base: basePath,
   plugins: [
     studioRewrite(),
+    seoPrerender(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
