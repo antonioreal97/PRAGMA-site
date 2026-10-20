@@ -1,10 +1,13 @@
 import { createRoot } from 'react-dom/client';
+import { inject } from '@vercel/analytics';
 
 import App from './App';
 import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
 import './assets/fonts/fonts.css';
+
+inject();
 
 createRoot(document.getElementById('root')!, {
   // Keeps caught errors off reportError(), which would raise the dev overlay.
