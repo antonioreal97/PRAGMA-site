@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width={{W}}, height={{H}}" />
+    <title>PRAGMA Live — Novo site ({{FMT}})</title>
+    <!--
+      GERADO por ../src/build.py a partir de ../src/template.html — edite o template e rode:
+        python3 src/build.py   (na pasta pragma-motion)
+      Tempos de cada cena: veja CENAS.md.
+    -->
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Montserrat";
+        src: url("assets/fonts/montserrat-latin.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "DM Mono";
+        src: url("assets/fonts/dm-mono-latin.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      :root {
+        --bg: #060907;
+        --surface: #111814;
+        --surface-2: #18211b;
+        --green: #21e05d;
+        --green-light: #5ff5b0;
+        --white: #edf0e8;
+        --gray: #a9b4ab;
+        --line: rgba(237, 240, 232, 0.16);
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: {{W}}px;
+        height: {{H}}px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--white);
+        font-family: "Montserrat", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .layer { position: absolute; inset: 0; }
+      .mono {
+        font-family: "DM Mono", monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .abs { position: absolute; }
+      .mask { display: block; overflow: hidden; padding-bottom: 0.06em; margin-bottom: -0.06em; }
+      .mask > span { display: block; }
+      .green { color: var(--green); }
+      .gray { color: var(--gray); }
+
+      /* ---------- base atmosphere ---------- */
+      #grid {
+        background-image:
+          linear-gradient(to right, rgba(95, 245, 176, 0.045) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(95, 245, 176, 0.045) 1px, transparent 1px);
+        background-size: 60px 60px;
+        background-position: -1px -1px;
+        opacity: 0;
+      }
+      #vignette {
+        background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+        pointer-events: none;
+      }
+      #grain {
+        background-image: url("assets/img/grain.png");
+        background-size: 512px 512px;
+        mix-blend-mode: overlay;
+        opacity: 0.05;
+        inset: -40px;
+        pointer-events: none;
+      }
+
+      /* ---------- HUD (production monitor frame) ---------- */
+      .corner { position: absolute; width: 30px; height: 30px; border-color: rgba(237, 240, 232, 0.38); border-style: solid; border-width: 0; }
+      .corner.tl { left: 40px; top: 40px; border-left-width: 2px; border-top-width: 2px; }
+      .corner.tr { right: 40px; top: 40px; border-right-width: 2px; border-top-width: 2px; }
+      .corner.bl { left: 40px; bottom: 40px; border-left-width: 2px; border-bottom-width: 2px; }
+      .corner.br { right: 40px; bottom: 40px; border-right-width: 2px; border-bottom-width: 2px; }
+      .hud { position: absolute; font-size: 20px; color: var(--gray); white-space: nowrap; line-height: 1; }
+      .hud.tl { left: 80px; top: 80px; display: flex; align-items: center; gap: 14px; }
+      .hud.tr { right: 80px; top: 80px; }
+      .hud.bl { left: 80px; bottom: 80px; }
+      .hud.br { right: 80px; bottom: 80px; }
+      .tally { width: 12px; height: 12px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px rgba(33, 224, 93, 0.8); display: block; }
+      .hud .w { color: var(--white); }
+      #tc { font-variant-numeric: tabular-nums; }
+
+      /* ---------- S1 signal + circle ---------- */
+      #s1-line {
+        position: absolute; left: 0; width: 100%; height: 2px; top: calc(var(--cy) - 1px);
+        background: linear-gradient(90deg, transparent, var(--green) 30%, var(--green-light) 50%, var(--green) 70%, transparent);
+        box-shadow: 0 0 14px rgba(33, 224, 93, 0.7);
+        transform-origin: 0 50%;
+      }
+      #s1-dot {
+        position: absolute; width: 14px; height: 14px; border-radius: 50%;
+        left: calc(50% - 7px); top: calc(var(--cy) - 7px);
+        background: var(--green-light); box-shadow: 0 0 22px 4px rgba(33, 224, 93, 0.75);
+      }
+      #circle {
+        position: absolute; width: 300px; height: 300px; left: calc(50% - 150px); top: calc(var(--cy) - 150px);
+        border-radius: 50%; overflow: hidden; background: #0b100d;
+        box-shadow: 0 0 60px rgba(33, 224, 93, 0.22);
+      }
+      #circle img.flash { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; filter: brightness(0.78) saturate(1.02); }
+      #circle .shade { position: absolute; inset: 0; background: radial-gradient(circle, rgba(6, 9, 7, 0.15) 0%, rgba(6, 9, 7, 0.55) 100%); }
+      #ring { position: absolute; width: 320px; height: 320px; left: calc(50% - 160px); top: calc(var(--cy) - 160px); overflow: visible; }
+      #ring circle { fill: none; stroke: var(--green); stroke-width: 2; filter: drop-shadow(0 0 6px rgba(33, 224, 93, 0.8)); }
+      #symbol { position: absolute; width: 132px; height: 132px; left: calc(50% - 66px); top: calc(var(--cy) - 66px); filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55)); }
+      #s1-text { position: absolute; left: 0; width: 100%; top: calc(var(--cy) + 210px); text-align: center; font-size: 26px; line-height: 1.6; }
+      #s1-text .mask > span { letter-spacing: 0.26em; }
+
+      /* ---------- S2 hero reveal ---------- */
+      #hero-mask { position: absolute; inset: 0; clip-path: circle(0px at 50% var(--cy)); }
+      #hero-cam { position: absolute; left: 0; top: 0; width: 2160px; height: 1350px; transform-origin: 0 0; }
+      #hero-cam video, #hero-cam .still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      #hero-frame { position: absolute; inset: -1px; border: 2px solid rgba(237, 240, 232, 0.0); }
+      #s2-scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 62%; background: linear-gradient(to top, rgba(6, 9, 7, 0.92) 8%, rgba(6, 9, 7, 0.55) 55%, transparent); opacity: 0; }
+      #s2-title { position: absolute; font-weight: 800; font-size: var(--s2-size); line-height: 0.95; letter-spacing: -0.02em; text-transform: uppercase; }
+      #s2-kicker { position: absolute; font-size: 22px; color: var(--gray); display: flex; align-items: center; gap: 12px; }
+      .rec { width: 12px; height: 12px; border-radius: 50%; background: var(--green); display: block; box-shadow: 0 0 12px rgba(33, 224, 93, 0.85); }
+
+      /* ---------- plane chrome (monitor framing) ---------- */
+      .plane { position: absolute; overflow: hidden; background: var(--surface); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(237, 240, 232, 0.12); }
+      .plane img, .plane video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+      .ticks { position: absolute; inset: -14px; pointer-events: none; }
+      .ticks i { position: absolute; width: 18px; height: 18px; border: 0 solid var(--green); }
+      .ticks i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+      .ticks i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
+      .ticks i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+      .ticks i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+      .cap { position: absolute; font-size: 20px; color: var(--gray); white-space: nowrap; }
+      .cap b { color: var(--green); font-weight: 400; }
+
+      /* ---------- S3 editorial ---------- */
+      #s3-kicker { position: absolute; font-size: 22px; color: var(--gray); }
+      #s3-title { position: absolute; font-weight: 800; font-size: var(--s3-size); line-height: 0.98; letter-spacing: -0.02em; text-transform: uppercase; }
+      .crop { position: absolute; overflow: hidden; background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(237, 240, 232, 0.12); }
+      .crop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .chip {
+        position: absolute; left: 14px; top: 14px; height: 40px; padding: 0 16px 0 14px; border-radius: 20px;
+        display: flex; align-items: center; gap: 10px; font-size: 20px; color: var(--white);
+        background: rgba(6, 9, 7, 0.82); box-shadow: 0 0 0 1px rgba(33, 224, 93, 0.35);
+      }
+      .chip .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(33, 224, 93, 0.9); display: block; }
+      #chain { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+      #chain path { fill: none; stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; filter: drop-shadow(0 0 5px rgba(33, 224, 93, 0.9)); }
+      .node { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 2px solid var(--green-light); box-shadow: 0 0 16px rgba(33, 224, 93, 0.9); opacity: 0; }
+
+      /* ---------- S4 ---------- */
+      #s4-text { position: absolute; font-weight: 800; font-size: var(--s4-size); line-height: 1.0; letter-spacing: -0.015em; text-transform: uppercase; }
+      #scan { position: absolute; height: 3px; background: linear-gradient(90deg, transparent, var(--green) 12%, var(--green-light) 50%, var(--green) 88%, transparent); box-shadow: 0 0 18px 2px rgba(33, 224, 93, 0.75); opacity: 0; }
+      #m-group { position: absolute; }
+      .mplane { position: absolute; overflow: hidden; background: var(--surface); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(237, 240, 232, 0.14); border-radius: 18px; }
+      .mplane img, .mplane video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+
+      /* ---------- S5 stack ---------- */
+      #s5-kicker { position: absolute; font-size: 22px; color: var(--gray); }
+      .stack {
+        position: absolute; height: 116px; padding: 22px 26px; background: rgba(17, 24, 20, 0.88);
+        box-shadow: 0 0 0 1px rgba(237, 240, 232, 0.14); display: flex; flex-direction: column; justify-content: space-between;
+      }
+      .stack .idx { font-size: 18px; color: var(--gray); display: flex; align-items: center; gap: 10px; }
+      .stack .idx .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(33, 224, 93, 0.9); display: block; }
+      .stack .name { font-size: 30px; color: var(--white); letter-spacing: 0.08em; white-space: nowrap; }
+      .stack .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--green); box-shadow: 0 0 10px rgba(33, 224, 93, 0.8); transform-origin: 50% 0; }
+      #links { position: absolute; left: 0; top: 0; overflow: visible; }
+      #links path { fill: none; stroke: rgba(33, 224, 93, 0.55); stroke-width: 1.5; stroke-dasharray: 4 6; }
+
+      /* ---------- S6 ---------- */
+      #s6-line { position: absolute; height: 2px; background: linear-gradient(90deg, transparent, var(--green) 20%, var(--green-light) 50%, var(--green) 80%, transparent); box-shadow: 0 0 16px 2px rgba(33, 224, 93, 0.7); opacity: 0; }
+      #logo { position: absolute; display: block; }
+      #s6-text { position: absolute; left: 0; width: 100%; text-align: center; font-weight: 700; font-size: var(--s6-size); line-height: 1.22; letter-spacing: 0.01em; text-transform: uppercase; }
+      #url { position: absolute; left: 0; width: 100%; display: flex; justify-content: center; }
+      #url .pill { display: flex; align-items: center; gap: 16px; font-size: 34px; letter-spacing: 0.06em; text-transform: none; color: var(--white); padding: 16px 30px; border-radius: 40px; box-shadow: 0 0 0 1px rgba(33, 224, 93, 0.45); background: rgba(17, 24, 20, 0.7); }
+      #url .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px rgba(33, 224, 93, 0.95); display: block; }
+      #pulse { position: absolute; border-radius: 50%; border: 2px solid var(--green); opacity: 0; pointer-events: none; }
+
+      /* ======================= FORMAT: portrait 1080x1350 ======================= */
+      .portrait { --cy: 640px; --s2-size: 112px; --s3-size: 84px; --s4-size: 70px; --s6-size: 46px; }
+      .portrait #s2-title { left: 80px; bottom: 170px; }
+      .portrait #s2-kicker { left: 80px; bottom: 430px; }
+      .portrait #s3-kicker { left: 80px; top: 150px; }
+      .portrait #s3-title { left: 80px; top: 196px; width: 920px; }
+      .portrait #crop-a { left: 80px; top: 430px; width: 440px; height: 440px; }
+      .portrait #crop-b { left: 540px; top: 430px; width: 460px; height: 270px; }
+      .portrait #crop-c { left: 540px; top: 720px; width: 460px; height: 150px; }
+      .portrait #crop-d { left: 80px; top: 890px; width: 920px; height: 326px; }
+      .portrait #d-plane { left: 80px; top: 150px; width: 920px; height: 575px; }
+      .portrait #d-cap { left: 80px; top: 752px; }
+      .portrait #m-group { left: 80px; top: 150px; width: 920px; height: 575px; }
+      .portrait #s4-text { left: 80px; top: 846px; width: 920px; }
+      .portrait #s5-kicker { left: 80px; top: 150px; }
+      .portrait #stage5 { left: 220px; top: 445px; width: 640px; height: 400px; }
+      .portrait #st-1 { left: 80px; top: 230px; width: 430px; }
+      .portrait #st-2 { left: 570px; top: 230px; width: 430px; }
+      .portrait #st-3 { left: 80px; top: 935px; width: 430px; }
+      .portrait #st-4 { left: 570px; top: 935px; width: 430px; }
+      .portrait #logo { width: 600px; left: 240px; top: 392px; }
+      .portrait #s6-text { top: 640px; }
+      .portrait #url { top: 846px; }
+
+      /* ======================= FORMAT: landscape 1920x1080 ======================= */
+      .landscape { --cy: 500px; --s2-size: 120px; --s3-size: 76px; --s4-size: 64px; --s6-size: 48px; }
+      .landscape #s2-title { right: 96px; bottom: 150px; text-align: right; }
+      .landscape #s2-kicker { right: 96px; bottom: 410px; }
+      .landscape #s2-scrim { top: 0; height: auto; left: 42%; background: linear-gradient(to left, rgba(6, 9, 7, 0.9) 18%, rgba(6, 9, 7, 0.55) 60%, transparent); }
+      .landscape #s3-kicker { left: 96px; top: 330px; }
+      .landscape #s3-title { left: 96px; top: 376px; width: 760px; }
+      .landscape #crop-a { left: 900px; top: 140px; width: 440px; height: 440px; }
+      .landscape #crop-b { left: 1360px; top: 140px; width: 464px; height: 272px; }
+      .landscape #crop-c { left: 1360px; top: 432px; width: 464px; height: 148px; }
+      .landscape #crop-d { left: 900px; top: 600px; width: 924px; height: 336px; }
+      .landscape #d-plane { left: 96px; top: 140px; width: 1104px; height: 690px; }
+      .landscape #d-cap { left: 96px; top: 856px; }
+      .landscape #m-group { left: 96px; top: 140px; width: 1104px; height: 690px; }
+      .landscape #s4-text { left: 1272px; top: 360px; width: 560px; }
+      .landscape #s5-kicker { left: 96px; top: 150px; }
+      .landscape #stage5 { left: 640px; top: 330px; width: 640px; height: 400px; }
+      .landscape #st-1 { left: 96px; top: 330px; width: 460px; }
+      .landscape #st-2 { left: 1364px; top: 330px; width: 460px; }
+      .landscape #st-3 { left: 96px; top: 614px; width: 460px; }
+      .landscape #st-4 { left: 1364px; top: 614px; width: 460px; }
+      .landscape #logo { width: 600px; left: 660px; top: 296px; }
+      .landscape #s6-text { top: 540px; }
+      .landscape #url { top: 738px; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      class="{{FMT}}"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="21.5"
+      data-width="{{W}}"
+      data-height="{{H}}"
+      data-fps="30"
+    >
+      <div id="bg" class="layer" style="background: var(--bg)"></div>
+      <div id="grid" class="layer"></div>
+
+      <!-- ===== S2: real site opening (video of the live hero) ===== -->
+      <div id="hero-mask">
+        <div id="hero-cam">
+          <img class="still" src="assets/img/d-hero.jpg" alt="" />
+          <video id="v-hero" class="clip" src="assets/video/hero-desktop.mp4" muted playsinline data-start="2.3" data-duration="4.9" data-track-index="1"></video>
+          <div id="hero-frame"></div>
+        </div>
+      </div>
+      <div id="s2-scrim"></div>
+      <div id="s2-kicker" class="mono"><span class="rec"></span><span>NO AR · SITEPRAGMA.COM.BR</span></div>
+      <h1 id="s2-title"><span class="mask" data-layout-allow-overflow><span>Novo site</span></span><span class="mask" data-layout-allow-overflow><span class="green">no ar</span></span></h1>
+      <div id="hero-cap" class="cap mono abs"><b>01</b> &nbsp;ABERTURA · MOSAICO</div>
+      <div id="hero-ticks" class="ticks abs"><i></i><i></i><i></i><i></i></div>
+
+      <!-- ===== S1: signal + circular logo reveal ===== -->
+      <div id="s1" class="layer">
+        <div id="s1-line"></div>
+        <div id="s1-dot"></div>
+        <div id="circle">
+          <img class="flash" src="assets/img/flash-0.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-1.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-3.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-2.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-4.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-5.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-8.jpg" alt="" />
+          <img class="flash" src="assets/img/flash-9.jpg" alt="" />
+          <div class="shade"></div>
+        </div>
+        <svg id="ring" viewBox="0 0 320 320"><circle cx="160" cy="160" r="156" /></svg>
+        <img id="symbol" src="assets/brand/pragma-symbol.svg" alt="PRAGMA" />
+        <div id="s1-text" class="mono">
+          <span class="mask" data-layout-allow-overflow><span class="w" style="color: var(--white)">PRAGMA LIVE</span></span>
+          <span class="mask" data-layout-allow-overflow><span class="green">NOVO SITE / 2026</span></span>
+        </div>
+      </div>
+
+      <!-- ===== S3: identity became interface ===== -->
+      <div id="s3" class="layer">
+        <div id="s3-kicker" class="mono"><span class="green">02</span> &nbsp;SISTEMA VISUAL · SINAL E LUZ</div>
+        <h2 id="s3-title"><span class="mask" data-layout-allow-overflow><span>Identidade que</span></span><span class="mask" data-layout-allow-overflow><span>virou <span class="green">interface</span></span></span></h2>
+        <div id="crop-a" class="crop"><img src="assets/img/c-luz.jpg" alt="" /><div class="chip mono"><span class="dot"></span>Luz</div></div>
+        <div id="crop-b" class="crop"><img src="assets/img/c-sinal.jpg" alt="" /><div class="chip mono"><span class="dot"></span>Sinal</div></div>
+        <div id="crop-c" class="crop"><img src="assets/img/c-movimento.jpg" alt="" style="object-position: 0% 50%" /><div class="chip mono" style="top: auto; bottom: 14px"><span class="dot"></span>Movimento</div></div>
+        <div id="crop-d" class="crop"><img src="assets/img/c-bastidores.jpg" alt="" style="object-position: 50% 30%" /><div class="chip mono"><span class="dot"></span>Bastidores</div></div>
+        <svg id="chain" width="{{W}}" height="{{H}}" viewBox="0 0 {{W}} {{H}}"><path id="chain-path" d="" /></svg>
+        <div class="node" id="n1"></div><div class="node" id="n2"></div><div class="node" id="n3"></div><div class="node" id="n4"></div>
+      </div>
+
+      <!-- ===== S4: experience & content ===== -->
+      <div id="s4" class="layer">
+        <div id="d-wrap" class="layer">
+          <div id="d-plane" class="plane">
+            <img src="assets/img/d-method1.jpg" alt="" />
+            <video id="v-scroll-d" class="clip" src="assets/video/scroll-desktop.mp4" muted playsinline data-start="10.0" data-duration="3.0" data-media-start="0.6" data-playback-rate="2" data-track-index="2"></video>
+          </div>
+          <div id="d-cap" class="cap mono"><b>03</b> &nbsp;DESKTOP · 1440 × 900</div>
+        </div>
+        <div id="m-group">
+          <div class="mplane" id="mp-1"><img src="assets/img/m-capabilities.jpg" alt="" /></div>
+          <div class="mplane" id="mp-2">
+            <img src="assets/img/m-about.jpg" alt="" />
+            <video id="v-scroll-m" class="clip" src="assets/video/scroll-mobile.mp4" muted playsinline data-start="12.2" data-duration="2.8" data-media-start="0" data-playback-rate="2.1" data-track-index="3"></video>
+          </div>
+          <div class="mplane" id="mp-3"><img src="assets/img/m-work.jpg" alt="" /></div>
+        </div>
+        <div id="m-cap" class="cap mono abs"><b>04</b> &nbsp;MOBILE · 390 × 844</div>
+        <div id="scan"></div>
+        <h2 id="s4-text">
+          <span class="mask" data-layout-allow-overflow><span>Design, conteúdo</span></span>
+          <span class="mask" data-layout-allow-overflow><span>e movimento</span></span>
+          <span class="mask" data-layout-allow-overflow><span class="green">em um único sistema</span></span>
+        </h2>
+      </div>
+
+      <!-- ===== S5: stack ===== -->
+      <div id="s5" class="layer">
+        <div id="s5-kicker" class="mono"><span class="green">05</span> &nbsp;STACK · MESA DE CONTROLE</div>
+        <svg id="links" width="{{W}}" height="{{H}}" viewBox="0 0 {{W}} {{H}}"><path id="links-path" d="" /></svg>
+        <div id="stage5" class="plane"><img src="assets/img/d-hero-stage.jpg" alt="" /><div class="ticks"><i></i><i></i><i></i><i></i></div></div>
+        <div id="st-1" class="stack mono"><span class="bar"></span><span class="idx"><span class="dot"></span>01 · Interface</span><span class="name">React + TypeScript</span></div>
+        <div id="st-2" class="stack mono"><span class="bar"></span><span class="idx"><span class="dot"></span>02 · Build e estilo</span><span class="name">Vite + Tailwind CSS</span></div>
+        <div id="st-3" class="stack mono"><span class="bar"></span><span class="idx"><span class="dot"></span>03 · Conteúdo</span><span class="name">Sanity CMS</span></div>
+        <div id="st-4" class="stack mono"><span class="bar"></span><span class="idx"><span class="dot"></span>04 · Deploy</span><span class="name">Vercel</span></div>
+      </div>
+
+      <!-- ===== S6: close ===== -->
+      <div id="s6" class="layer">
+        <div id="s6-line"></div>
+        <img id="logo" src="assets/brand/pragma-horizontal.svg" alt="PRAGMA Live Production" />
+        <div id="s6-text">
+          <span class="mask" data-layout-allow-overflow><span>Experiências ao vivo.</span></span>
+          <span class="mask" data-layout-allow-overflow><span class="green">Agora também no digital.</span></span>
+        </div>
+        <div id="url"><span class="pill mono"><span class="dot"></span>sitepragma.com.br</span></div>
+        <div id="pulse"></div>
+      </div>
+
+      <!-- ===== HUD ===== -->
+      <div id="hud" class="layer">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div id="hud-text" class="layer">
+          <div class="hud tl mono"><span class="tally" id="tally"></span><span class="w">PGM</span><span>PRAGMA LIVE</span></div>
+          <div class="hud tr mono">TC <span class="w" id="tc">00:00:00:00</span></div>
+          <div class="hud bl mono" id="scene-label">01 / SINAL</div>
+          <div class="hud br mono">{{FMTLABEL}} · 30P</div>
+        </div>
+      </div>
+      <div id="vignette" class="layer"></div>
+      <div id="grain" class="layer"></div>
+
+      <audio id="sfx" class="clip" src="assets/audio/sound-design.wav" data-start="0" data-duration="21.5" data-track-index="4" data-volume="0.9"></audio>
+    </div>
+
+    <script>
+      document.fonts.load('800 80px "Montserrat"').then(() => document.fonts.load('20px "DM Mono"')).then(() => document.fonts.ready).then(function () {
+        const root = document.getElementById("root");
+        const W = Number(root.dataset.width);
+        const H = Number(root.dataset.height);
+        const P = root.classList.contains("portrait");
+        const $ = (s) => document.querySelector(s);
+        const $$ = (s) => Array.from(document.querySelectorAll(s));
+        const box = (el) => ({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+
+        // ---- layout numbers per format ----
+        const L = P
+          ? {
+              cy: 640,
+              heroStart: { x: -1363, y: -150, s: 1.15 }, // mosaic side of the hero only (headline + nav kept out of frame)
+              heroPush: 1.23,
+              heroPlane: { w: 920, cx: 540, cy: 640 },
+              chainNodes: [[113, 464], [573, 464], [573, 836], [113, 924]],
+              chainPath: "M113,464 H573 V836 V880 H113 V924",
+            }
+          : {
+              cy: 500,
+              heroStart: { x: 0, y: -60, s: 0.8889 },
+              heroPush: 0.945,
+              heroPlane: { w: 1280, cx: 960, cy: 540 },
+              chainNodes: [[933, 174], [1393, 174], [1393, 546], [933, 644]],
+              chainPath: "M933,174 H1393 V546 V590 H933 V644",
+            };
+
+        // camera helpers for the hero plane (element is 2160x1350, origin 0 0)
+        const HW = 2160, HH = 1350;
+        const camPush = (s) => {
+          // zoom about the current frame centre while keeping the same look point
+          const lookX = (W / 2 - L.heroStart.x) / L.heroStart.s;
+          const lookY = (H / 2 - L.heroStart.y) / L.heroStart.s;
+          return { x: W / 2 - lookX * s, y: H / 2 - lookY * s, scale: s };
+        };
+        const ps = L.heroPlane.w / HW;
+        const camPlane = { x: L.heroPlane.cx - (HW * ps) / 2, y: L.heroPlane.cy - (HH * ps) / 2, scale: ps };
+        const planeBox = { x: camPlane.x, y: camPlane.y, w: HW * ps, h: HH * ps };
+
+        // place caption + ticks for the pulled-back hero plane
+        const hc = $("#hero-cap"); hc.style.left = planeBox.x + "px"; hc.style.top = planeBox.y + planeBox.h + 26 + "px";
+        const ht = $("#hero-ticks"); Object.assign(ht.style, { left: planeBox.x - 14 + "px", top: planeBox.y - 14 + "px", width: planeBox.w + 28 + "px", height: planeBox.h + 28 + "px", inset: "auto" });
+
+        // mobile trio layout inside #m-group
+        const mg = box($("#m-group"));
+        const mh = mg.h, mw = Math.round(mh * (390 / 844));
+        const gap = Math.round((mg.w - mw * 3) / 2);
+        ["#mp-1", "#mp-2", "#mp-3"].forEach((id, i) => Object.assign($(id).style, { left: i * (mw + gap) + "px", top: "0px", width: mw + "px", height: mh + "px" }));
+        const mc = $("#m-cap"); mc.style.left = mg.x + "px"; mc.style.top = mg.y + mg.h + 27 + "px";
+        const sc = $("#scan"); Object.assign(sc.style, { left: mg.x - 40 + "px", width: mg.w + 80 + "px", top: mg.y + "px" });
+
+        // S3 chain
+        $("#chain-path").setAttribute("d", L.chainPath);
+        L.chainNodes.forEach(([x, y], i) => Object.assign($("#n" + (i + 1)).style, { left: x + "px", top: y + "px" }));
+        const chainLen = $("#chain-path").getTotalLength();
+        const segLens = (() => {
+          const pts = L.chainNodes; const p = $("#chain-path");
+          // distance along path to each node (sample)
+          const out = [0]; let k = 1; const N = 600;
+          for (let i = 1; i <= N && k < pts.length; i++) {
+            const d = (chainLen * i) / N; const q = p.getPointAtLength(d);
+            if (Math.hypot(q.x - pts[k][0], q.y - pts[k][1]) < 3) { out.push(d); k++; }
+          }
+          while (out.length < pts.length) out.push(chainLen);
+          return out.map((d) => d / chainLen);
+        })();
+
+        // S5 connector lines (panel inner edge -> plane corner)
+        const sp = box($("#stage5"));
+        const st = [1, 2, 3, 4].map((i) => box($("#st-" + i)));
+        const corners = [[sp.x, sp.y], [sp.x + sp.w, sp.y], [sp.x, sp.y + sp.h], [sp.x + sp.w, sp.y + sp.h]];
+        const anchors = P
+          ? [[st[0].x + 60, st[0].y + st[0].h], [st[1].x + st[1].w - 60, st[1].y + st[1].h], [st[2].x + 60, st[2].y], [st[3].x + st[3].w - 60, st[3].y]]
+          : [[st[0].x + st[0].w, st[0].y + st[0].h / 2], [st[1].x, st[1].y + st[1].h / 2], [st[2].x + st[2].w, st[2].y + st[2].h / 2], [st[3].x, st[3].y + st[3].h / 2]];
+        $("#links-path").setAttribute("d", anchors.map((a, i) => (P ? `M${a[0]},${a[1]} V${corners[i][1]} H${corners[i][0]}` : `M${a[0]},${a[1]} H${(a[0] + corners[i][0]) / 2} V${corners[i][1]} H${corners[i][0]}`)).join(" "));
+
+        // S6 line geometry
+        const s6l = $("#s6-line"); Object.assign(s6l.style, { left: sp.x + "px", width: sp.w + "px", top: sp.y + sp.h / 2 + "px" });
+        const lg = box($("#logo"));
+        const pu = $("#pulse");
+
+        // ================= TIMELINE =================
+        const tl = gsap.timeline({ paused: true });
+        const E = { out: "expo.out", inOut: "power3.inOut", soft: "power2.out", sine: "sine.inOut" };
+
+        // initial states
+        gsap.set("#s1-line", { scaleX: 0, opacity: 1 });
+        gsap.set("#s1-dot", { scale: 0, opacity: 0 });
+        gsap.set("#circle", { scale: 0.2, opacity: 0 });
+        gsap.set("#ring circle", { strokeDasharray: 981, strokeDashoffset: 981 });
+        gsap.set("#symbol", { opacity: 0, scale: 0.9 });
+        gsap.set(".mask > span", { yPercent: 110 });
+        gsap.set("#hero-cam", { x: L.heroStart.x, y: L.heroStart.y, scale: L.heroStart.s });
+        gsap.set(["#s2-kicker", "#hero-cap", "#hero-ticks", "#s3-kicker", "#d-cap", "#m-cap", "#s5-kicker"], { opacity: 0 });
+        gsap.set(".crop", { opacity: 0 });
+        gsap.set("#chain-path", { strokeDasharray: chainLen, strokeDashoffset: chainLen });
+        gsap.set("#d-wrap", { opacity: 0 });
+        gsap.set("#m-group", { opacity: 0 });
+        gsap.set(["#stage5", ".stack"], { opacity: 0 });
+        gsap.set("#links-path", { opacity: 0 });
+        gsap.set("#logo", { opacity: 0 });
+        gsap.set("#url", { opacity: 0 });
+        gsap.set("#hud", { opacity: 0 });
+        // scene layers are only visible inside their windows (keeps hidden text out of the frame entirely)
+        gsap.set(["#s3", "#s4", "#s5", "#s6", "#s2-title"], { opacity: 0 });
+        tl.set("#s2-title", { opacity: 1 }, 3.0); tl.set("#s2-title", { opacity: 0 }, 5.4);
+        tl.set("#s3", { opacity: 1 }, 6.0); tl.set("#s3", { opacity: 0 }, 10.35);
+        tl.set("#s4", { opacity: 1 }, 9.95); tl.set("#s4", { opacity: 0 }, 15.1);
+        tl.set("#s5", { opacity: 1 }, 14.45); tl.set("#s5", { opacity: 0 }, 18.15);
+        tl.set("#s6", { opacity: 1 }, 17.9);
+
+        // ---------- global: timecode, grid, grain jitter ----------
+        const tcEl = $("#tc"); const pad = (n) => String(n).padStart(2, "0");
+        const clock = { f: 0 };
+        tl.to(clock, { f: 21.5 * 30, duration: 21.5, ease: "none", onUpdate: () => { const f = Math.floor(clock.f); tcEl.textContent = `00:00:${pad(Math.floor(f / 30))}:${pad(f % 30)}`; } }, 0);
+        tl.to("#grain", { x: 23, y: -17, duration: 21.5, ease: "steps(129)" }, 0);
+        tl.to("#hud", { opacity: 1, duration: 0.6, ease: E.soft }, 0.35);
+        tl.fromTo("#tally", { opacity: 0.25 }, { opacity: 1, duration: 0.25, ease: "power1.inOut", yoyo: true, repeat: 1 }, 0.5);
+
+        // scene label swaps (text set at fixed times — deterministic via onUpdate on proxies)
+        const labels = [[0, "01 / SINAL"], [2.5, "02 / O SITE"], [6, "03 / IDENTIDADE"], [10, "04 / EXPERIÊNCIA"], [14.5, "05 / STACK"], [17.5, "06 / NO AR"]];
+        const lbl = $("#scene-label"); const lp = { t: 0 };
+        tl.to(lp, { t: 21.5, duration: 21.5, ease: "none", onUpdate: () => { let s = labels[0][1]; for (const [t, v] of labels) if (lp.t >= t) s = v; if (lbl.textContent !== s) lbl.textContent = s; } }, 0);
+
+        // ---------- S1 — 0.0 → 2.5 ----------
+        tl.to("#s1-line", { scaleX: 1, duration: 0.7, ease: "power2.inOut" }, 0.1);
+        tl.to("#s1-line", { opacity: 0, duration: 0.5, ease: E.soft }, 0.85);
+        tl.to("#s1-dot", { scale: 1, opacity: 1, duration: 0.18, ease: E.out }, 0.55);
+        tl.to("#s1-dot", { scale: 2.1, opacity: 0, duration: 0.5, ease: E.soft }, 0.75);
+        tl.to("#circle", { scale: 1, opacity: 1, duration: 0.7, ease: E.out }, 0.8);
+        tl.to("#ring circle", { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 0.85);
+        // photo flashes behind the mark (soft cuts, not strobe)
+        const flashes = $$("#circle img.flash");
+        flashes.forEach((img, i) => {
+          const t = 0.9 + i * 0.15;
+          tl.fromTo(img, { opacity: 0 }, { opacity: 1, duration: 0.06, ease: "none", immediateRender: false }, t);
+          if (i < flashes.length - 1) tl.to(img, { opacity: 0, duration: 0.06, ease: "none" }, t + 0.17);
+        });
+        tl.to(flashes[flashes.length - 1], { opacity: 0, duration: 0.3, ease: E.soft }, 2.05);
+        tl.to("#symbol", { opacity: 1, scale: 1, duration: 0.6, ease: E.out }, 1.0);
+        tl.to("#s1-text .mask > span", { yPercent: 0, duration: 0.6, ease: E.out, stagger: 0.12 }, 1.35);
+        tl.to("#grid", { opacity: 0.55, duration: 1.2, ease: E.soft }, 1.2);
+
+        // ---------- S2 — 2.5 → 6.0 ----------
+        // circle opens into the real site
+        tl.to("#s1-text .mask > span", { yPercent: -110, duration: 0.45, ease: "power3.in", stagger: 0.05 }, 2.2);
+        tl.to("#symbol", { opacity: 0, scale: 1.25, duration: 0.5, ease: "power3.in" }, 2.3);
+        tl.to("#ring", { scale: 1.6, opacity: 0, duration: 0.7, ease: "power3.in" }, 2.35);
+        tl.to("#circle", { scale: 1.6, opacity: 0, duration: 0.6, ease: "power3.in" }, 2.35);
+        tl.fromTo("#hero-mask", { clipPath: `circle(150px at 50% ${L.cy}px)` }, { clipPath: `circle(${Math.hypot(W, H)}px at 50% ${L.cy}px)`, duration: 1.0, ease: "expo.inOut", immediateRender: false }, 2.45);
+        tl.set("#s1", { opacity: 0 }, 3.3);
+        // slow confident push-in on the moving mosaic
+        tl.to("#hero-cam", { ...camPush(L.heroPush), duration: 2.6, ease: "sine.inOut" }, 2.5);
+        tl.to("#s2-scrim", { opacity: 1, duration: 0.6, ease: E.soft }, 2.95);
+        tl.to("#s2-kicker", { opacity: 1, duration: 0.4, ease: E.soft }, 3.05);
+        tl.to("#s2-title .mask > span", { yPercent: 0, duration: 0.75, ease: E.out, stagger: 0.12 }, 3.1);
+        tl.to("#s2-title .mask > span", { yPercent: -110, duration: 0.5, ease: "power3.in", stagger: 0.06 }, 4.75);
+        tl.to("#s2-kicker", { opacity: 0, duration: 0.3, ease: E.soft }, 4.8);
+        tl.to("#s2-scrim", { opacity: 0, duration: 0.6, ease: E.soft }, 4.95);
+        // pull back: full page breathes as a monitor plane
+        tl.to("#hero-cam", { x: camPlane.x, y: camPlane.y, scale: camPlane.scale, duration: 1.0, ease: "power3.inOut" }, 5.0);
+        tl.to("#hero-frame", { borderColor: "rgba(237,240,232,0.22)", duration: 0.6 }, 5.6);
+        tl.to(["#hero-ticks", "#hero-cap"], { opacity: 1, duration: 0.35, ease: E.soft }, 5.95);
+
+        // ---------- S3 — 6.0 → 10.0 ----------
+        tl.to("#hero-mask", { opacity: 0, y: -40, duration: 0.5, ease: "power3.in" }, 6.4);
+        tl.to(["#hero-ticks", "#hero-cap"], { opacity: 0, duration: 0.3 }, 6.4);
+        tl.to("#grid", { opacity: 1, duration: 0.6 }, 6.3);
+        tl.to("#s3-kicker", { opacity: 1, duration: 0.4 }, 6.55);
+        tl.to("#s3-title .mask > span", { yPercent: 0, duration: 0.75, ease: E.out, stagger: 0.12 }, 6.6);
+        const crops = ["#crop-a", "#crop-b", "#crop-c", "#crop-d"];
+        const from = P ? [[-60, 30], [60, 30], [60, 0], [0, 60]] : [[-60, 30], [60, 30], [60, 0], [0, 60]];
+        crops.forEach((c, i) => {
+          tl.fromTo(c, { opacity: 0, x: from[i][0], y: from[i][1], rotationY: from[i][0] ? (from[i][0] > 0 ? -7 : 7) : 0, rotationX: from[i][1] ? 5 : 0, transformPerspective: 1400 },
+            { opacity: 1, x: 0, y: 0, rotationY: 0, rotationX: 0, duration: 0.9, ease: E.out, immediateRender: false }, 6.75 + i * 0.14);
+          tl.fromTo(c + " img", { scale: 1.12 }, { scale: 1.0, duration: 3.4, ease: "power2.out", immediateRender: false }, 6.75 + i * 0.14);
+        });
+        // transmission chain: draw line, light each node as the signal reaches it
+        const C0 = 7.65, CD = 1.5;
+        tl.to("#chain-path", { strokeDashoffset: 0, duration: CD, ease: "power1.inOut" }, C0);
+        const inv = (p) => { // invert power1.inOut for node timing
+          return p < 0.5 ? Math.sqrt(p / 2) : 1 - Math.sqrt((1 - p) / 2);
+        };
+        L.chainNodes.forEach((_, i) => {
+          const t = C0 + CD * inv(segLens[i]);
+          tl.fromTo("#n" + (i + 1), { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.18, ease: E.out, immediateRender: false }, t);
+          tl.to("#n" + (i + 1), { scale: 1.9, opacity: 0, duration: 0.55, ease: E.soft }, t + 0.18);
+          tl.fromTo(crops[i] + " .chip", { boxShadow: "0 0 0 1px rgba(33,224,93,0.35)" }, { boxShadow: "0 0 0 2px rgba(95,245,176,0.95), 0 0 22px rgba(33,224,93,0.7)", duration: 0.2, ease: E.out, immediateRender: false }, t);
+          tl.to(crops[i] + " .chip", { boxShadow: "0 0 0 1px rgba(33,224,93,0.5)", duration: 0.6, ease: E.soft }, t + 0.25);
+        });
+
+        // ---------- S4 — 10.0 → 14.5 ----------
+        tl.to(["#s3-kicker"], { opacity: 0, duration: 0.3 }, 9.75);
+        tl.to("#s3-title .mask > span", { yPercent: -110, duration: 0.45, ease: "power3.in", stagger: 0.05 }, 9.7);
+        crops.forEach((c, i) => tl.to(c, { opacity: 0, y: -24, scale: 0.97, duration: 0.45, ease: "power3.in" }, 9.75 + i * 0.04));
+        tl.to("#chain-path", { opacity: 0, duration: 0.3 }, 9.75);
+        tl.to("#grid", { opacity: 0.45, duration: 0.6 }, 9.9);
+        tl.fromTo("#d-wrap", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: E.soft, immediateRender: false }, 10.0);
+        tl.fromTo("#d-plane", { clipPath: "inset(0% 0% 100% 0%)", scale: 1.04 }, { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.8, ease: "expo.out", immediateRender: false }, 10.0);
+        tl.to("#d-cap", { opacity: 1, duration: 0.4 }, 10.4);
+        tl.to("#s4-text .mask > span", { yPercent: 0, duration: 0.8, ease: E.out, stagger: 0.13 }, 10.45);
+        // scanline transition desktop -> mobile
+        const SC = 12.25;
+        tl.set("#scan", { opacity: 1, y: 0 }, SC);
+        tl.to("#scan", { y: mg.h, duration: 0.55, ease: "power2.inOut" }, SC);
+        tl.to("#scan", { opacity: 0, duration: 0.2 }, SC + 0.55);
+        tl.fromTo("#d-plane", { clipPath: "inset(0% 0% 0% 0%)" }, { clipPath: "inset(100% 0% 0% 0%)", duration: 0.55, ease: "power2.inOut", immediateRender: false }, SC);
+        tl.to("#d-cap", { opacity: 0, duration: 0.2 }, SC);
+        tl.set("#m-group", { opacity: 1 }, SC);
+        tl.fromTo("#m-group", { clipPath: "inset(0% 0% 100% -10%)" }, { clipPath: "inset(0% -10% 0% -10%)", duration: 0.55, ease: "power2.inOut", immediateRender: false }, SC);
+        tl.fromTo(["#mp-1", "#mp-3"], { y: 30 }, { y: 0, duration: 1.2, ease: E.out, immediateRender: false }, SC);
+        tl.fromTo("#mp-1 img", { objectPosition: "50% 0%" }, { objectPosition: "50% 60%", duration: 2.2, ease: "sine.inOut", immediateRender: false }, SC);
+        tl.fromTo("#mp-3 img", { objectPosition: "50% 70%" }, { objectPosition: "50% 10%", duration: 2.2, ease: "sine.inOut", immediateRender: false }, SC);
+        tl.to("#m-cap", { opacity: 1, duration: 0.4 }, SC + 0.45);
+
+        // ---------- S5 — 14.5 → 17.5 ----------
+        tl.to("#s4-text .mask > span", { yPercent: -110, duration: 0.4, ease: "power3.in", stagger: 0.05 }, 13.95);
+        tl.to("#m-cap", { opacity: 0, duration: 0.3 }, 14.0);
+        tl.to("#m-group", { scale: 0.8, opacity: 0, duration: 0.45, ease: "power3.in" }, 14.1);
+        tl.fromTo("#stage5", { opacity: 0, scale: 1.18 }, { opacity: 1, scale: 1, duration: 0.85, ease: "power3.out", immediateRender: false }, 14.55);
+        tl.fromTo("#stage5 img", { scale: 1.08 }, { scale: 1.0, duration: 3.0, ease: "power2.out", immediateRender: false }, 14.55);
+        tl.to("#s5-kicker", { opacity: 1, duration: 0.4 }, 14.7);
+        tl.fromTo("#links-path", { opacity: 0, strokeDashoffset: 60 }, { opacity: 1, strokeDashoffset: 0, duration: 1.6, ease: "none", immediateRender: false }, 15.0);
+        [1, 2, 3, 4].forEach((i) => {
+          const t = 14.95 + (i - 1) * 0.38;
+          tl.fromTo("#st-" + i, { opacity: 0, x: (i % 2 ? -1 : 1) * (P ? 0 : 40), y: P ? (i < 3 ? -24 : 24) : 0 }, { opacity: 1, x: 0, y: 0, duration: 0.6, ease: E.out, immediateRender: false }, t);
+          tl.fromTo(`#st-${i} .bar`, { scaleY: 0 }, { scaleY: 1, duration: 0.45, ease: E.out, immediateRender: false }, t + 0.05);
+          tl.fromTo(`#st-${i} .idx .dot`, { scale: 2.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: E.out, immediateRender: false }, t + 0.1);
+        });
+
+        // ---------- S6 — 17.5 → 21.0 ----------
+        tl.to(".stack", { opacity: 0, duration: 0.35, ease: E.soft, stagger: 0.04 }, 17.35);
+        tl.to(["#links-path", "#s5-kicker"], { opacity: 0, duration: 0.3 }, 17.35);
+        // interface collapses into a luminous line
+        tl.to("#stage5", { scaleY: 0.006, duration: 0.55, ease: "power3.in" }, 17.5);
+        tl.set("#s6-line", { opacity: 1, scaleX: 1 }, 18.0);
+        tl.set("#stage5", { opacity: 0 }, 18.05);
+        tl.fromTo("#s6-line", { scaleX: 1 }, { scaleX: 1.3, duration: 0.35, ease: E.soft, immediateRender: false }, 18.0);
+        tl.to("#s6-line", { y: lg.y + lg.h / 2 - (sp.y + sp.h / 2), scaleX: 0.02, duration: 0.6, ease: "power3.inOut" }, 18.35);
+        tl.to("#s6-line", { opacity: 0, duration: 0.2 }, 18.85);
+        tl.fromTo("#logo", { opacity: 0, clipPath: "inset(0% 50% 0% 50%)" }, { opacity: 1, clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "expo.out", immediateRender: false }, 18.75);
+        tl.to("#grid", { opacity: 0.3, duration: 1.0 }, 18.5);
+        tl.to("#s6-text .mask > span", { yPercent: 0, duration: 0.7, ease: E.out, stagger: 0.12 }, 18.95);
+        tl.fromTo("#url", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: E.out, immediateRender: false }, 19.2);
+        // final green pulse from the URL dot
+        const ub = $("#url .dot").getBoundingClientRect();
+        Object.assign(pu.style, { left: ub.left + ub.width / 2 - 40 + "px", top: ub.top + ub.height / 2 - 40 + "px", width: "80px", height: "80px" });
+        tl.fromTo("#pulse", { opacity: 0.9, scale: 0.2 }, { opacity: 0, scale: 1.6, duration: 0.55, ease: E.soft, immediateRender: false }, 19.4);
+        tl.fromTo("#url .dot", { scale: 1 }, { scale: 1.5, duration: 0.15, ease: "power2.out", yoyo: true, repeat: 1, immediateRender: false }, 19.4);
+
+        tl.to("#hud-text", { opacity: 0, duration: 0.5, ease: E.soft }, 18.9);
+        window.__timelines["main"] = tl;
+      });
+    </script>
+  </body>
+</html>

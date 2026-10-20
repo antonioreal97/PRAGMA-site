@@ -6,7 +6,7 @@ export function Brand({ className = "" }: { className?: string }) {
       className={`brand-logo ${className}`}
       src={logo}
       alt="PRAGMA Live Production"
-      width={1050}
+      width={1020}
       height={240}
     />
   );
